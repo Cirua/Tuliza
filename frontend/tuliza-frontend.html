@@ -26,7 +26,7 @@
 
       <div class="nav-tabs" role="navigation" aria-label="Section links">
         <a class="nav-tab active" href="tuliza-frontend.html" aria-current="page">Dashboard</a>
-        <a class="nav-tab" href="chat.html">Chat</a>
+        <a class="nav-tab" href="chat-ui.html">Chat</a>
         <a class="nav-tab" href="resources.html">Resources</a>
         <a class="nav-tab" href="journal.html">Journal</a>
         <a class="nav-tab" href="account.html">Account</a>
@@ -50,7 +50,7 @@
       <aside class="sidebar" aria-label="Side navigation">
         <span class="sidebar-section-label">Menu</span>
 
-        <button class="sidebar-item active" aria-current="page" data-link="tuliza-frontend.html">
+        <button class="sidebar-item active" aria-current="page" data-link="tuliza-frontend.html" aria-label="Overview">
           <!-- Overview icon -->
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <rect x="1" y="1" width="6" height="6" rx="1"/>
@@ -61,14 +61,14 @@
           <span>Overview</span>
         </button>
 
-        <button class="sidebar-item" data-link="journal.html">
+        <button class="sidebar-item" data-link="journal.html" aria-label="My Wellbeing">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm-1 4h2v5H7zm0-3h2v2H7z"/>
           </svg>
           <span>My Wellbeing</span>
         </button>
 
-        <button class="sidebar-item" data-link="chat-ui.html">
+        <button class="sidebar-item" data-link="chat-ui.html" aria-label="Conversations">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M2 2h12a1 1 0 011 1v8a1 1 0 01-1 1H9l-3 2v-2H2a1 1 0 01-1-1V3a1 1 0 011-1z"/>
           </svg>
@@ -79,21 +79,21 @@
         <div class="divider"></div>
         <span class="sidebar-section-label">Support</span>
 
-        <button class="sidebar-item" data-modal="booking-modal">
+        <button class="sidebar-item" data-modal="booking-modal" aria-label="Book a Session">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M8 1L5.5 6H1l4 3.5-1.5 5L8 12l4.5 2.5-1.5-5L15 6h-4.5z"/>
           </svg>
           <span>Book a Session</span>
         </button>
 
-        <button class="sidebar-item" data-link="resources.html">
+        <button class="sidebar-item" data-link="resources.html" aria-label="Resources">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5zm0 2h6v1H5zm0 2h4v1H5z"/>
           </svg>
           <span>Resources</span>
         </button>
 
-        <button class="sidebar-item" data-link="journal.html">
+        <button class="sidebar-item" data-link="journal.html" aria-label="Journal">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M3 1h10a1 1 0 011 1v12l-3-2H3a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v1h8V4H4zm0 2v1h6V6H4z"/>
           </svg>
@@ -289,7 +289,7 @@
       </div>
 
       <div class="modal-actions" style="margin-top:20px">
-        <button class="btn-primary" style="background:var(--danger)">Call now</button>
+        <a class="btn-primary" style="background:var(--danger)" href="tel:999">Call now</a>
         <button class="btn-ghost-modal" onclick="document.getElementById('crisis-modal').style.display='none'">Close</button>
       </div>
     </div>
@@ -458,7 +458,7 @@
     actionBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.classList.contains('primary')) {
-          window.location.href = 'chat.html';
+          window.location.href = 'chat-ui.html';
         }
         if (btn.classList.contains('secondary')) {
           document.getElementById('booking-modal').style.display = 'flex';

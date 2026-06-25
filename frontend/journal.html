@@ -21,7 +21,7 @@
     </a>
     <div class="nav-tabs" role="navigation" aria-label="Section links">
       <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
-      <a class="nav-tab" href="chat.html">Chat</a>
+      <a class="nav-tab" href="chat-ui.html">Chat</a>
       <a class="nav-tab" href="resources.html">Resources</a>
       <a class="nav-tab active" href="journal.html" aria-current="page">Journal</a>
       <a class="nav-tab" href="account.html">Account</a>
@@ -52,21 +52,12 @@
     const saveBtn = document.querySelector('.save-btn');
     const journalEntriesKey = 'tuliza_journal_entries';
     const journalDateStorageKey = 'tuliza_last_journal_date';
+    const inMemoryEntries = [];
 
     const now = new Date();
     dateLabel.textContent = now.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
 
-    const existingEntriesRaw = localStorage.getItem(journalEntriesKey);
-    if (existingEntriesRaw) {
-      try {
-        const entries = JSON.parse(existingEntriesRaw);
-        if (Array.isArray(entries) && entries.length > 0 && entries[0].text) {
-          input.value = entries[0].text;
-        }
-      } catch (_) {
-        input.value = '';
-      }
-    }
+    localStorage.removeItem(journalEntriesKey);
 
     function refreshWordCount() {
       const words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0;
@@ -84,16 +75,7 @@
         savedAt: new Date().toISOString()
       };
 
-      let entries = [];
-      try {
-        const parsed = JSON.parse(localStorage.getItem(journalEntriesKey) || '[]');
-        if (Array.isArray(parsed)) entries = parsed;
-      } catch (_) {
-        entries = [];
-      }
-
-      entries.unshift(entry);
-      localStorage.setItem(journalEntriesKey, JSON.stringify(entries.slice(0, 30)));
+      inMemoryEntries.unshift(entry);
       localStorage.setItem(journalDateStorageKey, entry.savedAt);
 
       const original = saveBtn.textContent;

@@ -1259,6 +1259,16 @@ textarea {
   box-shadow: 0 2px 10px rgba(74,124,111,0.14);
 }
 
+.choice-group.invalid .choice-btn {
+  border-color: var(--danger);
+}
+
+.choice-error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--danger);
+}
+
 .slide-nav {
   display: flex;
   justify-content: space-between;

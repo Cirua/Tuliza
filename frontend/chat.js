@@ -48,13 +48,27 @@
     // Match existing CSS in frontend/styles.css
     // - Counselor bubble: align-left, background cream
     // - User bubble: align-right, background sage
-    wrap.innerHTML = `
-      <div style="font-weight:600; margin-bottom:6px;">
-        ${type === 'user' ? 'You' : safeSender} ${fromRole ? '(' + roleLabel(fromRole) + ')' : ''}
-      </div>
-      <div style="white-space:pre-wrap;">${safeText}</div>
-      ${safeTimestamp ? `<div style="opacity:.65; font-size:12px; margin-top:6px; text-align:right;">${safeTimestamp}</div>` : ''}
-    `;
+    const senderLine = document.createElement('div');
+    senderLine.style.fontWeight = '600';
+    senderLine.style.marginBottom = '6px';
+    senderLine.textContent = `${type === 'user' ? 'You' : safeSender}${fromRole ? ` (${roleLabel(fromRole)})` : ''}`;
+
+    const textLine = document.createElement('div');
+    textLine.style.whiteSpace = 'pre-wrap';
+    textLine.textContent = safeText;
+
+    wrap.appendChild(senderLine);
+    wrap.appendChild(textLine);
+
+    if (safeTimestamp) {
+      const timestampLine = document.createElement('div');
+      timestampLine.style.opacity = '.65';
+      timestampLine.style.fontSize = '12px';
+      timestampLine.style.marginTop = '6px';
+      timestampLine.style.textAlign = 'right';
+      timestampLine.textContent = safeTimestamp;
+      wrap.appendChild(timestampLine);
+    }
 
     messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -68,7 +82,13 @@
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      let data;
+      try {
+        data = JSON.parse(event.data);
+      } catch (_) {
+        return;
+      }
+
       // server sends: {sender, text, timestamp, fromRole, toRole}
       addMessage(data);
     };
@@ -161,6 +181,13 @@
         })
       );
     }
+
+    addMessage({
+      sender: myNameForUI,
+      text,
+      timestamp,
+      fromRole: myRole,
+    });
 
     input.value = '';
     input.focus();

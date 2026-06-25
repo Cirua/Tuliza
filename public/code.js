@@ -4,8 +4,14 @@
 const ws = new WebSocket('ws://localhost:3000/server')
 
 ws.onmessage = (event) => {
-  const message = JSON.parse(event.data)
-  chatMessages.innerHTML += createChatMessageElement(message)
+  let message
+  try {
+    message = JSON.parse(event.data)
+  } catch (_) {
+    return
+  }
+
+  chatMessages.appendChild(createChatMessageElement(message))
   chatMessages.scrollTop = chatMessages.scrollHeight
 }
 
@@ -25,13 +31,30 @@ let myUserId = ''
 
 const createChatMessageElement = (message) => {
   // message contains: sender, text, timestamp, fromRole/toRole
-  return `
-    <div class="message ${message.sender === messageSender ? 'blue-bg' : 'gray-bg'}">
-      <div class="message-sender">${message.sender} (${message.fromRole || ''})</div>
-      <div class="message-text">${message.text}</div>
-      <div class="message-timestamp">${message.timestamp}</div>
-    </div>
-  `
+  const sender = String(message?.sender ?? 'Unknown')
+  const fromRole = String(message?.fromRole ?? '')
+  const text = String(message?.text ?? '')
+  const timestamp = String(message?.timestamp ?? '')
+
+  const wrap = document.createElement('div')
+  wrap.className = `message ${sender === messageSender ? 'blue-bg' : 'gray-bg'}`
+
+  const senderEl = document.createElement('div')
+  senderEl.className = 'message-sender'
+  senderEl.textContent = fromRole ? `${sender} (${fromRole})` : sender
+
+  const textEl = document.createElement('div')
+  textEl.className = 'message-text'
+  textEl.textContent = text
+
+  const timestampEl = document.createElement('div')
+  timestampEl.className = 'message-timestamp'
+  timestampEl.textContent = timestamp
+
+  wrap.appendChild(senderEl)
+  wrap.appendChild(textEl)
+  wrap.appendChild(timestampEl)
+  return wrap
 }
 
 const updateMessageSender = (name, code, role) => {

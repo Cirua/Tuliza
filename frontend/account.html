@@ -21,7 +21,7 @@
     </a>
     <div class="nav-tabs" role="navigation" aria-label="Section links">
       <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
-      <a class="nav-tab" href="chat.html">Chat</a>
+      <a class="nav-tab" href="chat-ui.html">Chat</a>
       <a class="nav-tab" href="resources.html">Resources</a>
       <a class="nav-tab" href="journal.html">Journal</a>
       <a class="nav-tab active" href="account.html" aria-current="page">Account</a>
@@ -228,6 +228,7 @@
     const prefsSection = document.getElementById('questionnaire-section');
     const prefsForm = document.getElementById('prefs-form');
     const result = document.getElementById('match-result');
+    let lastMatchResult = null;
 
     signupForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -284,6 +285,7 @@
             btn.addEventListener('click', () => {
               select.value = option.value;
               updateChoiceSelection(select, group);
+              clearChoiceValidation(select, group);
 
               if (validateCurrentSlide() && currentSlide < slides.length - 1) {
                 setTimeout(() => {
@@ -305,6 +307,34 @@
       buttons.forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.value === select.value);
       });
+    }
+
+    function clearChoiceValidation(select, group) {
+      if (!group) return;
+      group.classList.remove('invalid');
+      const errorEl = group.nextElementSibling;
+      if (errorEl && errorEl.classList.contains('choice-error')) {
+        errorEl.remove();
+      }
+      select.setCustomValidity('');
+      select.removeAttribute('aria-invalid');
+      select.removeAttribute('aria-describedby');
+    }
+
+    function setChoiceValidation(select, group, message) {
+      if (!group) return;
+      clearChoiceValidation(select, group);
+      group.classList.add('invalid');
+
+      const errorEl = document.createElement('p');
+      errorEl.className = 'choice-error';
+      errorEl.id = `${select.id}-choice-error`;
+      errorEl.textContent = message;
+      group.insertAdjacentElement('afterend', errorEl);
+
+      select.setCustomValidity(message);
+      select.setAttribute('aria-invalid', 'true');
+      select.setAttribute('aria-describedby', errorEl.id);
     }
 
     function syncCurrentSlideChoice() {
@@ -330,6 +360,18 @@
     function validateCurrentSlide() {
       const requiredFields = slides[currentSlide].querySelectorAll('input[required], select[required], textarea[required]');
       for (const field of requiredFields) {
+        if (field.matches('select.native-hidden-select')) {
+          const group = field.nextElementSibling;
+          if (!field.value) {
+            setChoiceValidation(field, group, 'Please choose an option to continue.');
+            group?.querySelector('.choice-btn')?.focus();
+            return false;
+          }
+
+          clearChoiceValidation(field, group);
+          continue;
+        }
+
         if (!field.value || !field.checkValidity()) {
           field.reportValidity();
           return false;
@@ -389,7 +431,11 @@
         createdAt: new Date().toISOString()
       };
 
-      localStorage.setItem('tuliza_user_preferences', JSON.stringify(prefs));
+      lastMatchResult = prefs;
+      localStorage.setItem('tuliza_user_preferences', JSON.stringify({
+        questionnaireCompleted: true,
+        createdAt: prefs.createdAt
+      }));
 
       result.style.display = 'block';
       result.innerHTML = '<strong>Recommended assignment:</strong> ' + top.role + ' - ' + top.name + ' (' + top.id + ')<br>'

@@ -5,6 +5,24 @@ const http = require('http')
 
 const app = express()
 
+const allowedOrigins = new Set(
+  (process.env.TULIZA_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+)
+
+const allowedOriginPatterns = [
+  /^https?:\/\/localhost(?::\d+)?$/i,
+  /^https?:\/\/127\.0\.0\.1(?::\d+)?$/i,
+]
+
+function isAllowedOrigin(origin) {
+  if (!origin) return false
+  if (allowedOrigins.has(origin)) return true
+  return allowedOriginPatterns.some((pattern) => pattern.test(origin))
+}
+
 /* Serve static files from the root directory */
 app.use(express.static(__dirname))
 
@@ -22,7 +40,24 @@ app.get('/server', (req, res) => {
 const server = http.createServer(app)
 
 /* Initialize WebSocket server and bind it to the HTTP server */
-const wss = new WebSocket.Server({ server })
+const wss = new WebSocket.Server({
+  server,
+  verifyClient: (info, done) => {
+    const origin = info.origin || info.req.headers.origin
+    const path = info.req.url || ''
+    if (!path.startsWith('/server')) {
+      done(false, 404, 'Invalid websocket path')
+      return
+    }
+
+    if (!isAllowedOrigin(origin)) {
+      done(false, 403, 'Forbidden origin')
+      return
+    }
+
+    done(true)
+  },
+})
 
 // Prevent unhandled WebSocketServer errors during server startup retries.
 wss.on('error', (err) => {
@@ -47,15 +82,36 @@ function getOrCreateSet(map, key1, key2, key3) {
 /* Handle WebSocket connections */
 wss.on('connection', (ws) => {
   ws.userContext = null;
+  ws.isAuthorized = false;
+
+  ws.on('error', (err) => {
+    console.warn('WebSocket client error:', err.message)
+  })
 
   ws.on('message', (message) => {
-    const messageObject = JSON.parse(message.toString());
+    let messageObject
+    try {
+      messageObject = JSON.parse(message.toString())
+    } catch (_) {
+      return
+    }
+
     const { type } = messageObject;
 
     // JOIN: { type:'join', userId, role }
     if (type === 'join') {
-      const { userId, role } = messageObject;
+      const { userId, role, authToken } = messageObject;
       if (!userId || !role) return;
+
+      if (!['student', 'mentor', 'psychiatrist'].includes(role)) return;
+
+      const expectedToken = process.env.TULIZA_WS_TOKEN;
+      if (expectedToken && authToken !== expectedToken) {
+        ws.close(1008, 'Unauthorized');
+        return;
+      }
+
+      ws.isAuthorized = true;
 
       ws.userContext = { userId, role };
 
@@ -64,12 +120,16 @@ wss.on('connection', (ws) => {
       return;
     }
 
+    if (!ws.isAuthorized || !ws.userContext) return;
+
     // SEND:
     // Student -> { fromRole:'student', toRole:'mentor'|'psychiatrist', toUserId?:string, chatCode, sender, text }
     // Mentor/Psychiatrist -> { fromRole:'mentor'|'psychiatrist', toRole:'student', toUserId:string, chatCode, sender, text }
     const { fromRole, toRole, toUserId, sender, text, timestamp } = messageObject;
 
     if (!fromRole || !toRole || !text) return;
+    if (fromRole !== ws.userContext.role) return;
+    if (sender !== ws.userContext.userId) return;
 
     const targetRoleMap = userRooms['__global__']?.[toRole];
 
