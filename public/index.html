@@ -1,41 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tuliza</title>
-    <link rel="stylesheet" type="text/css" href="./style.css">
-    </head>
-<body>
-    <div class="app">
-        <div class="screen join-screen active">
-            <div class="form">
-                <h2>Join Chat</h2>
-                <div class="form-input">
-                    <label for="username">Username</label>
-                    <input type="text" id="username">
-                </div>
-                <div class="form-input">
-                    <button id="join-user">Join</button>
-                </div>
-            </div>
-        </div>
-        <div class="screen chat-screen">    
-            <div class="header">
-                <div class="logo">Chatbox</div>
-                <button id="close-chat">X</button>
-            </div>
-            <div class="messages">
-               
-            </div>  
-            <div class="typebox">
-                <input type="text" id="message-input" placeholder="Type your message..." required>
-                <button id="send-message">Send</button>
-            </div>
-        </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat App</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="user-info-modal">
+      <div class="modal-content">
+        <h2 class="modal-header">Enter your details</h2>
+
+        <form class="user-info-form">
+          <input name="username" type="text" required placeholder="Your display name" />
+
+          <select name="role" class="chat-select" required>
+            <option value="student">Student</option>
+            <option value="mentor">Mentor</option>
+            <option value="psychiatrist">Psychiatrist</option>
+          </select>
+
+          <input
+            id="targetStudent"
+            name="targetStudent"
+            type="text"
+            placeholder="Target student (only for mentor/psychiatrist)"
+          />
+
+          <button type="submit" class="button join-button">Join</button>
+        </form>
+      </div>
     </div>
-    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
-    <script type="text/javascript" src="./code.js"></script>
-</body>        
+
+    <div class="chat-container">
+      <h2 class="chat-header">Who's chatting...</h2>
+
+      <div class="chat-messages"></div>
+
+      <form class="chat-input-form">
+        <input type="text" class="chat-input" required placeholder="Type your message..." />
+        <button type="submit" class="button send-button">Send</button>
+      </form>
+      <button class="button clear-chat-button">Clear Chat</button>
+    </div>
+
+    <script src="code.js"></script>
+  </body>
 </html>

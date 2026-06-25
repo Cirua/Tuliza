@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Resource Details</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="resource-detail-page video-unavailable">
+  <div class="ambient-video-wrap" aria-hidden="true">
+    <div class="waterfall-fallback"></div>
+    <video id="waterfall-video" class="ambient-video" autoplay muted loop playsinline>
+      <source src="https://www.google.com/search?q=waterfall+short+videos&udm=7&sxsrf=APpeQnuCjhvUpjqYKi2aLKgC4yQoc2K39w%3A1781987845166#fpstate=ive&ip=1&vld=cid:e7d96c75,vid:RlLSVBBAeag,st:0" type="video/mp4" />
+      <source src="https://www.google.com/search?q=waterfall+short+videos&udm=7&sxsrf=APpeQnuCjhvUpjqYKi2aLKgC4yQoc2K39w%3A1781987845166#fpstate=ive&ip=1&vld=cid:e7d96c75,vid:RlLSVBBAeag,st:0" />
+    </video>
+    <div class="matte-layer"></div>
+  </div>
+
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="logo" href="tuliza-frontend.html">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+    </a>
+    <div class="nav-tabs" role="navigation" aria-label="Section links">
+      <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
+      <a class="nav-tab" href="chat.html">Chat</a>
+      <a class="nav-tab active" href="resources.html" aria-current="page">Resources</a>
+      <a class="nav-tab" href="journal.html">Journal</a>
+      <a class="nav-tab" href="account.html">Account</a>
+    </div>
+  </nav>
+
+  <main class="detail-main">
+    <div class="ambient-controls">
+      <button id="ambience-toggle" class="btn-ghost-modal" type="button">Play wind chimes</button>
+    </div>
+
+    <section class="detail-card">
+      <h1 id="topic-title" class="detail-title">Resource</h1>
+      <p id="topic-summary" class="subtitle"></p>
+    </section>
+
+    <section class="detail-card">
+      <h2>Practical Steps</h2>
+      <ol id="steps" class="steps-list"></ol>
+      <div class="modal-actions">
+        <a class="btn-ghost-modal" href="resources.html">Back to resources</a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const topics = {
+      'exam-pressure': {
+        title: 'Coping With Exam Pressure',
+        summary: 'Use structure and short recovery moments to protect focus and reduce panic.',
+        steps: [
+          'Split revision into 25-minute blocks with 5-minute breaks.',
+          'Create a top-3 priority list every morning.',
+          'Use one grounding technique before each study block.',
+          'Sleep at a fixed time for at least 7 hours.'
+        ]
+      },
+      'calm-reset': {
+        title: '2-Minute Calm Reset',
+        summary: 'A quick breathing reset to calm body stress signals.',
+        steps: [
+          'Inhale gently through the nose for 4 seconds.',
+          'Hold the breath for 4 seconds.',
+          'Exhale slowly for 6 seconds.',
+          'Repeat 6 rounds while relaxing your shoulders.'
+        ]
+      },
+      'sleep-balance': {
+        title: 'Sleep and Study Balance',
+        summary: 'Better sleep improves memory and emotional resilience.',
+        steps: [
+          'Stop intense study 45 minutes before bed.',
+          'Avoid caffeine after 3 PM.',
+          'Keep your room dim and quiet at night.',
+          'Write tomorrow\'s top tasks before sleeping.'
+        ]
+      },
+      'overthinking-toolkit': {
+        title: 'Overthinking Toolkit',
+        summary: 'Interrupt thought spirals and return to useful action.',
+        steps: [
+          'Name the thought pattern (catastrophizing, perfectionism, etc.).',
+          'Ask: what evidence supports this and what evidence does not?',
+          'Choose one next action you can complete in 10 minutes.',
+          'Repeat with a self-compassionate phrase.'
+        ]
+      },
+      'ask-for-help': {
+        title: 'When to Ask for Help',
+        summary: 'Early support can prevent burnout and isolation.',
+        steps: [
+          'If distress lasts over 2 weeks, book a support session.',
+          'If sleep or appetite changes sharply, contact counseling.',
+          'If you feel unsafe, use emergency contacts immediately.',
+          'Tell one trusted person what you are experiencing.'
+        ]
+      },
+      'journaling-prompts': {
+        title: 'Journaling Starter Prompts',
+        summary: 'Structured prompts make reflection easier on hard days.',
+        steps: [
+          'What am I feeling right now, and where do I feel it in my body?',
+          'What triggered this feeling today?',
+          'What do I need most right now?',
+          'What is one kind action I can take for myself today?'
+        ]
+      },
+      'social-anxiety': {
+        title: 'Managing Social Anxiety',
+        summary: 'Small exposure and preparation can reduce social fear over time.',
+        steps: [
+          'Choose one low-stress social interaction this week.',
+          'Prepare one opener sentence before the interaction.',
+          'Focus on listening rather than performing perfectly.',
+          'Reflect on what went better than expected.'
+        ]
+      }
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const key = params.get('topic') || 'exam-pressure';
+    const topic = topics[key] || topics['exam-pressure'];
+
+    document.getElementById('topic-title').textContent = topic.title;
+    document.getElementById('topic-summary').textContent = topic.summary;
+
+    const stepsNode = document.getElementById('steps');
+    topic.steps.forEach((step) => {
+      const item = document.createElement('li');
+      item.textContent = step;
+      stepsNode.appendChild(item);
+    });
+
+    const video = document.getElementById('waterfall-video');
+    const ambienceToggle = document.getElementById('ambience-toggle');
+
+    video.addEventListener('canplay', () => {
+      document.body.classList.remove('video-unavailable');
+      document.body.classList.add('video-available');
+    });
+
+    video.addEventListener('error', () => {
+      document.body.classList.remove('video-available');
+      document.body.classList.add('video-unavailable');
+    });
+
+    let audioCtx = null;
+    let masterGain = null;
+    let chimesOn = false;
+    let chimeTimer = null;
+
+    function randomIn(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function playChime(frequency, startAt, length, panValue) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const pan = audioCtx.createStereoPanner();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(frequency, startAt);
+      osc.frequency.exponentialRampToValueAtTime(frequency * randomIn(0.995, 1.005), startAt + length);
+
+      gain.gain.setValueAtTime(0.0001, startAt);
+      gain.gain.exponentialRampToValueAtTime(0.12, startAt + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startAt + length);
+
+      pan.pan.setValueAtTime(panValue, startAt);
+
+      osc.connect(gain);
+      gain.connect(pan);
+      pan.connect(masterGain);
+
+      osc.start(startAt);
+      osc.stop(startAt + length + 0.05);
+    }
+
+    function scheduleChimeCluster() {
+      if (!chimesOn) return;
+
+      const now = audioCtx.currentTime;
+      const baseFreq = [392, 440, 523.25, 659.25][Math.floor(Math.random() * 4)];
+      playChime(baseFreq, now + 0.02, randomIn(2.8, 4.2), randomIn(-0.7, 0.7));
+      playChime(baseFreq * 1.25, now + randomIn(0.22, 0.5), randomIn(2.4, 3.7), randomIn(-0.7, 0.7));
+      if (Math.random() > 0.45) {
+        playChime(baseFreq * 1.5, now + randomIn(0.45, 0.9), randomIn(2.0, 3.2), randomIn(-0.7, 0.7));
+      }
+
+      const nextDelay = randomIn(3400, 7000);
+      chimeTimer = setTimeout(scheduleChimeCluster, nextDelay);
+    }
+
+    async function toggleChimes() {
+      if (!chimesOn) {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          masterGain = audioCtx.createGain();
+          masterGain.gain.value = 0.14;
+          masterGain.connect(audioCtx.destination);
+        }
+
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        chimesOn = true;
+        ambienceToggle.textContent = 'Pause wind chimes';
+        scheduleChimeCluster();
+      } else {
+        chimesOn = false;
+        if (chimeTimer) {
+          clearTimeout(chimeTimer);
+          chimeTimer = null;
+        }
+        ambienceToggle.textContent = 'Play wind chimes';
+      }
+    }
+
+    ambienceToggle.addEventListener('click', () => {
+      toggleChimes().catch(() => {
+        ambienceToggle.textContent = 'Tap again to enable sound';
+      });
+    });
+  </script>
+</body>
+</html>

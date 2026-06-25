@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Conversations</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <a href="tuliza-frontend.html" class="logo" aria-label="Tuliza home">
+        <div class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+          </svg>
+        </div>
+        <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+      </a>
+
+      <div class="nav-tabs" role="navigation" aria-label="Section links">
+        <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
+        <a class="nav-tab active" href="chat-ui.html" aria-current="page">Chat</a>
+        <a class="nav-tab" href="resources.html">Resources</a>
+        <a class="nav-tab" href="journal.html">Journal</a>
+        <a class="nav-tab" href="account.html">Account</a>
+      </div>
+    </nav>
+
+    <main class="detail-main">
+      <h1 style="margin-bottom:12px;">Conversations</h1>
+
+      <section class="detail-card chat-wrap" id="tuliza-chat">
+        <div class="chat-header">
+          <div class="session-row">
+            <div>
+              <div style="font-weight:700;">Chat</div>
+              <div class="chat-sub" id="chat-header">Not connected</div>
+            </div>
+            <button id="chat-clear" class="btn-ghost-modal" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+
+        <form class="chat-input-row" id="chat-input-form">
+          <input id="chat-input" class="chat-input" type="text" required placeholder="Type your message..." />
+          <button class="send-btn" type="submit">Send</button>
+        </form>
+
+        <!-- Join modal -->
+        <div class="modal-overlay" id="chat-join-modal" style="display:flex;">
+          <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+              <div class="modal-eyebrow">Student ↔ Mentor/Psychiatrist</div>
+              <h2 class="modal-title">Join conversation</h2>
+              <p class="modal-subtitle">Pick your role and connect to start messaging.</p>
+            </div>
+
+            <form id="chat-join-form" class="auth-card" style="box-shadow:none; border:none;">
+              <div class="form-group">
+                <label class="form-label" for="chat-username">Your display name</label>
+                <input id="chat-username" class="form-input" type="text" required placeholder="e.g., Starling_92" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="chat-role">Role</label>
+                <select id="chat-role" class="form-select" required>
+                  <option value="student">Student</option>
+                  <option value="mentor">Mentor</option>
+                  <option value="psychiatrist">Psychiatrist</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="chat-targetStudent">Target student (Mentor/Psychiatrist replies)</label>
+                <input id="chat-targetStudent" class="form-input" type="text" placeholder="Must match the student's display name" />
+              </div>
+
+              <div class="modal-actions">
+                <button type="submit" class="btn-primary">Join</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="chat.js"></script>
+</body>
+</html>
+
