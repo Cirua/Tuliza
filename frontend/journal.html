@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Journal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="logo" href="tuliza-frontend.html">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+    </a>
+    <div class="nav-tabs" role="navigation" aria-label="Section links">
+      <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
+      <a class="nav-tab" href="chat-ui.html">Chat</a>
+      <a class="nav-tab" href="resources.html">Resources</a>
+      <a class="nav-tab active" href="journal.html" aria-current="page">Journal</a>
+      <a class="nav-tab" href="account.html">Account</a>
+    </div>
+  </nav>
+
+  <main class="journal-main">
+    <h1>Private Journal</h1>
+    <p class="subtitle">Write freely. This space is for reflection and emotional clarity.</p>
+
+    <section class="editor" aria-label="Journal editor">
+      <div class="toolbar">
+        <strong>New entry</strong>
+        <span class="date" id="date-label"></span>
+      </div>
+      <textarea id="journal-input" placeholder="Today I am feeling..."></textarea>
+      <div class="footer">
+        <span class="count" id="word-count">0 words</span>
+        <button class="save-btn" type="button">Save entry</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const input = document.getElementById('journal-input');
+    const counter = document.getElementById('word-count');
+    const dateLabel = document.getElementById('date-label');
+    const saveBtn = document.querySelector('.save-btn');
+    const journalEntriesKey = 'tuliza_journal_entries';
+    const journalDateStorageKey = 'tuliza_last_journal_date';
+    const inMemoryEntries = [];
+
+    const now = new Date();
+    dateLabel.textContent = now.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+
+    localStorage.removeItem(journalEntriesKey);
+
+    function refreshWordCount() {
+      const words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0;
+      counter.textContent = words + ' words';
+    }
+
+    input.addEventListener('input', refreshWordCount);
+
+    saveBtn.addEventListener('click', () => {
+      const text = input.value.trim();
+      if (!text) return;
+
+      const entry = {
+        text,
+        savedAt: new Date().toISOString()
+      };
+
+      inMemoryEntries.unshift(entry);
+      localStorage.setItem(journalDateStorageKey, entry.savedAt);
+
+      const original = saveBtn.textContent;
+      saveBtn.textContent = 'Saved';
+      setTimeout(() => {
+        saveBtn.textContent = original;
+      }, 1200);
+    });
+
+    refreshWordCount();
+  </script>
+</body>
+</html>
