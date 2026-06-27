@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="logo" href="tuliza-frontend.html">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+    </a>
+    <div class="nav-tabs" role="navigation" aria-label="Role pages">
+      <a class="nav-tab" href="tuliza-frontend.html">Student</a>
+      <a class="nav-tab" href="mentor.html">Mentor</a>
+      <a class="nav-tab" href="psychologist.html">Psychologist</a>
+      <a class="nav-tab active" href="admin.html" aria-current="page">Admin</a>
+      <a class="nav-tab" href="account.html">Account</a>
+    </div>
+  </nav>
+
+  <main class="role-main fade-up">
+    <section class="role-hero">
+      <div>
+        <p class="role-eyebrow">Platform operations</p>
+        <h1>Oversee system health and quality</h1>
+        <p class="subtitle">Monitor user growth, appointment throughput, response quality, and moderation workflows.</p>
+      </div>
+      <div class="role-actions">
+        <button class="btn-primary" type="button">Create report</button>
+        <button class="btn-ghost-modal" type="button">Manage roles</button>
+      </div>
+    </section>
+
+    <section class="role-kpi-grid fade-up fade-up-delay-1" aria-label="Admin metrics">
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Total students</p>
+        <p class="role-kpi-value">1,248</p>
+        <p class="role-kpi-meta">+62 this month</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Mentors active</p>
+        <p class="role-kpi-value">37</p>
+        <p class="role-kpi-meta">31 online now</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Psychologists active</p>
+        <p class="role-kpi-value">14</p>
+        <p class="role-kpi-meta">12 available today</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Open incidents</p>
+        <p class="role-kpi-value">3</p>
+        <p class="role-kpi-meta">2 high priority</p>
+      </article>
+    </section>
+
+    <section class="role-layout fade-up fade-up-delay-2">
+      <article class="role-panel">
+        <div class="role-panel-head">
+          <h2>Operational snapshot</h2>
+          <button class="btn-ghost-modal" type="button">Download CSV</button>
+        </div>
+        <div class="role-table-wrap">
+          <table class="role-table" aria-label="Operational snapshot table">
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Today</th>
+                <th>7-day avg</th>
+                <th>Trend</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>New signups</td>
+                <td>42</td>
+                <td>35</td>
+                <td><span class="role-pill">Up</span></td>
+                <td>Admissions IT</td>
+              </tr>
+              <tr>
+                <td>Completed sessions</td>
+                <td>118</td>
+                <td>102</td>
+                <td><span class="role-pill">Up</span></td>
+                <td>Clinical Ops</td>
+              </tr>
+              <tr>
+                <td>No-show appointments</td>
+                <td>9</td>
+                <td>13</td>
+                <td><span class="role-pill warning">Improving</span></td>
+                <td>Support Team</td>
+              </tr>
+              <tr>
+                <td>Escalated cases</td>
+                <td>4</td>
+                <td>2</td>
+                <td><span class="role-pill high">Watch</span></td>
+                <td>Duty Psychologist</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="role-stack">
+        <article class="role-panel">
+          <h3>Moderation queue</h3>
+          <ul class="role-list">
+            <li>2 reports of abusive language in peer chat</li>
+            <li>1 account pending identity verification</li>
+            <li>3 stale mentor profiles missing updates</li>
+          </ul>
+        </article>
+        <article class="role-panel">
+          <h3>Broadcast notice</h3>
+          <textarea class="form-textarea" placeholder="Write a platform notice for all users..."></textarea>
+          <button class="btn-primary" type="button" style="margin-top:12px;">Publish update</button>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const storedMood = localStorage.getItem('tuliza_dashboard_mood') || 'calm';
+    document.body.setAttribute('data-mood', storedMood);
+  </script>
+</body>
+</html>
