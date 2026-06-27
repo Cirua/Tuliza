@@ -114,41 +114,5 @@
     <p class="resource-empty-state" id="resource-empty-state" style="display:none;">No resources matched your search. Try another keyword or filter.</p>
   </main>
 
-  <script>
-    const resourceSearchInput = document.getElementById('resource-search');
-    const resourceFilterButtons = document.querySelectorAll('.resource-chip');
-    const resourceCards = document.querySelectorAll('[data-resource-card]');
-    const resourceEmptyState = document.getElementById('resource-empty-state');
-
-    let activeFilter = 'all';
-
-    function applyResourceFilters() {
-      const query = resourceSearchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
-
-      resourceCards.forEach(card => {
-        const title = card.dataset.title || '';
-        const tags = card.dataset.tags || '';
-        const matchesFilter = activeFilter === 'all' || tags.includes(activeFilter);
-        const matchesQuery = !query || title.includes(query) || tags.includes(query);
-        const visible = matchesFilter && matchesQuery;
-        card.style.display = visible ? '' : 'none';
-        if (visible) visibleCount += 1;
-      });
-
-      resourceEmptyState.style.display = visibleCount === 0 ? 'block' : 'none';
-    }
-
-    resourceSearchInput.addEventListener('input', applyResourceFilters);
-
-    resourceFilterButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        resourceFilterButtons.forEach(chip => chip.classList.remove('active'));
-        button.classList.add('active');
-        activeFilter = button.dataset.filter;
-        applyResourceFilters();
-      });
-    });
-  </script>
 </body>
 </html>

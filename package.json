@@ -7,7 +7,8 @@
     "start": "node backend/server.js",
     "server": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "db:test": "node backend/db-test.js"
+    "db:test": "node backend/db-test.js",
+    "passwords:hash": "node backend/scripts/hash-passwords.js"
   },
   "repository": {
     "type": "git",
@@ -22,6 +23,7 @@
   },
   "homepage": "https://github.com/Cirua/tuliza#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "pg": "^8.13.1",

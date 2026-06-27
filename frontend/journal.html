@@ -45,47 +45,5 @@
     </section>
   </main>
 
-  <script>
-    const input = document.getElementById('journal-input');
-    const counter = document.getElementById('word-count');
-    const dateLabel = document.getElementById('date-label');
-    const saveBtn = document.querySelector('.save-btn');
-    const journalEntriesKey = 'tuliza_journal_entries';
-    const journalDateStorageKey = 'tuliza_last_journal_date';
-    const inMemoryEntries = [];
-
-    const now = new Date();
-    dateLabel.textContent = now.toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
-
-    localStorage.removeItem(journalEntriesKey);
-
-    function refreshWordCount() {
-      const words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0;
-      counter.textContent = words + ' words';
-    }
-
-    input.addEventListener('input', refreshWordCount);
-
-    saveBtn.addEventListener('click', () => {
-      const text = input.value.trim();
-      if (!text) return;
-
-      const entry = {
-        text,
-        savedAt: new Date().toISOString()
-      };
-
-      inMemoryEntries.unshift(entry);
-      localStorage.setItem(journalDateStorageKey, entry.savedAt);
-
-      const original = saveBtn.textContent;
-      saveBtn.textContent = 'Saved';
-      setTimeout(() => {
-        saveBtn.textContent = original;
-      }, 1200);
-    });
-
-    refreshWordCount();
-  </script>
 </body>
 </html>
