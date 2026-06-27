@@ -108,21 +108,15 @@
   </main>
 
   <script>
-    function isValidEmail(email) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
-    }
-
     function isStrongPassword(password) {
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-      return passwordRegex.test(password);
+      return /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{7,}$/.test(password || '');
     }
 
     function getRoleRedirect(role) {
       if (role === 'mentor') return 'mentor.html';
       if (role === 'psychiatrist') return 'psychologist.html';
       if (role === 'admin') return 'admin.html';
-      return 'tuliza-frontend.html';
+      return 'student.html';
     }
 
     const tabLogin = document.getElementById('tab-login');
@@ -145,38 +139,22 @@
       paneSignup.style.display = isLogin ? 'none' : '';
     }
 
-    function clearMessages() {
-      loginMessage.textContent = '';
-      signupMessage.textContent = '';
-    }
-
     tabLogin.addEventListener('click', () => activateTab('login'));
     tabSignup.addEventListener('click', () => activateTab('signup'));
 
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearMessages();
+      loginMessage.textContent = '';
 
       const email = document.getElementById('login-alias').value.trim();
       const role = document.getElementById('login-role').value;
       const password = document.getElementById('login-password').value;
 
-      if (!email || !role || !password) {
-        loginMessage.textContent = 'Please fill in all login fields.';
-        return;
-      }
-      if (!isValidEmail(email)) {
-        loginMessage.textContent = 'Please enter a valid email address.';
-        return;
-      }
-
-      loginMessage.textContent = 'Logging in...';
-
       try {
         const response = await fetch('/api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, role })
+          body: JSON.stringify({ email, role, password }),
         });
 
         const payload = await response.json().catch(() => ({}));
@@ -185,50 +163,42 @@
           return;
         }
 
-        localStorage.setItem('tuliza_session_user', JSON.stringify({
-          alias: email,
+        if (payload.sessionToken) {
+          sessionStorage.setItem('tuliza_session_token', payload.sessionToken);
+        }
+
+        sessionStorage.setItem('tuliza_session_user', JSON.stringify({
+          email,
           role,
-          userId: payload.userId || null,
-          loginAt: new Date().toISOString(),
+          userId: payload.userId,
+          signupId: payload.signupId,
         }));
 
         loginMessage.textContent = 'Login successful. Redirecting...';
-        setTimeout(() => {
-          window.location.href = getRoleRedirect(role);
-        }, 500);
-      } catch (err) {
-        loginMessage.textContent = 'Cannot reach server. Please try again.';
+        window.location.href = payload.redirectTo || getRoleRedirect(role);
+      } catch (_) {
+        loginMessage.textContent = 'Could not reach server.';
       }
     });
 
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearMessages();
+      signupMessage.textContent = '';
 
       const email = document.getElementById('signup-alias').value.trim();
       const role = document.getElementById('signup-role').value;
       const password = document.getElementById('signup-password').value;
 
-      if (!email || !role || !password) {
-        signupMessage.textContent = 'Please fill in all sign up fields.';
-        return;
-      }
-      if (!isValidEmail(email)) {
-        signupMessage.textContent = 'Please enter a valid email address.';
-        return;
-      }
       if (!isStrongPassword(password)) {
-        signupMessage.textContent = 'Password must be at least 6 characters with letters and numbers.';
+        signupMessage.textContent = 'Password must be more than 6 characters and include uppercase, lowercase, and a special character.';
         return;
       }
-
-      signupMessage.textContent = 'Creating account...';
 
       try {
         const response = await fetch('/api/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, role })
+          body: JSON.stringify({ email, role, password }),
         });
 
         const payload = await response.json().catch(() => ({}));
@@ -237,23 +207,12 @@
           return;
         }
 
-        localStorage.setItem('tuliza_signup_user', JSON.stringify({
-          alias: email,
-          role,
-          userId: payload.userId || null,
-          createdAt: new Date().toISOString(),
-        }));
-
-        signupMessage.textContent = 'Account created. Redirecting...';
-        setTimeout(() => {
-          if (role === 'student') {
-            window.location.href = 'questionnaire.html';
-            return;
-          }
-          window.location.href = getRoleRedirect(role);
-        }, 500);
-      } catch (err) {
-        signupMessage.textContent = 'Cannot reach server. Please try again.';
+        signupMessage.textContent = payload.message || 'Signup successful.';
+        activateTab('login');
+        document.getElementById('login-alias').value = email;
+        document.getElementById('login-role').value = role;
+      } catch (_) {
+        signupMessage.textContent = 'Could not reach server.';
       }
     });
 

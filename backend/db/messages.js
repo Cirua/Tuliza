@@ -9,35 +9,51 @@ async function loadConversationHistory(context, limit = 100) {
 
   if (context.role === 'student' && context.peerRole === 'mentor') {
     sql = `
-      SELECT message_id, sent_message, received_message, sent_at, students_id, mentors_id, psychiatrists_id
-      FROM messages
-      WHERE students_id = $1 AND mentors_id = $2
+      SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+      FROM (
+        SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+        FROM messages
+        WHERE student_id = $1 AND mentor_id = $2
+        ORDER BY sent_at DESC NULLS LAST, message_id DESC
+        LIMIT $3
+      ) latest
       ORDER BY sent_at ASC NULLS FIRST, message_id ASC
-      LIMIT $3
     `
   } else if (context.role === 'student' && context.peerRole === 'psychiatrist') {
     sql = `
-      SELECT message_id, sent_message, received_message, sent_at, students_id, mentors_id, psychiatrists_id
-      FROM messages
-      WHERE students_id = $1 AND psychiatrists_id = $2
+      SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+      FROM (
+        SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+        FROM messages
+        WHERE student_id = $1 AND psychiatrist_id = $2
+        ORDER BY sent_at DESC NULLS LAST, message_id DESC
+        LIMIT $3
+      ) latest
       ORDER BY sent_at ASC NULLS FIRST, message_id ASC
-      LIMIT $3
     `
   } else if (context.role === 'mentor' && context.peerRole === 'student') {
     sql = `
-      SELECT message_id, sent_message, received_message, sent_at, students_id, mentors_id, psychiatrists_id
-      FROM messages
-      WHERE mentors_id = $1 AND students_id = $2
+      SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+      FROM (
+        SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+        FROM messages
+        WHERE mentor_id = $1 AND student_id = $2
+        ORDER BY sent_at DESC NULLS LAST, message_id DESC
+        LIMIT $3
+      ) latest
       ORDER BY sent_at ASC NULLS FIRST, message_id ASC
-      LIMIT $3
     `
   } else {
     sql = `
-      SELECT message_id, sent_message, received_message, sent_at, students_id, mentors_id, psychiatrists_id
-      FROM messages
-      WHERE psychiatrists_id = $1 AND students_id = $2
+      SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+      FROM (
+        SELECT message_id, sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id
+        FROM messages
+        WHERE psychiatrist_id = $1 AND student_id = $2
+        ORDER BY sent_at DESC NULLS LAST, message_id DESC
+        LIMIT $3
+      ) latest
       ORDER BY sent_at ASC NULLS FIRST, message_id ASC
-      LIMIT $3
     `
   }
 
@@ -50,14 +66,14 @@ async function loadConversationHistory(context, limit = 100) {
       if (!text || String(text).trim().length === 0) return null
 
       let fromRole = 'student'
-      let sender = row.students_id != null ? String(row.students_id) : ''
+      let sender = row.student_id != null ? String(row.student_id) : ''
       if (!isStudentMessage) {
-        if (row.mentors_id != null) {
+        if (row.mentor_id != null) {
           fromRole = 'mentor'
-          sender = String(row.mentors_id)
+          sender = String(row.mentor_id)
         } else {
           fromRole = 'psychiatrist'
-          sender = row.psychiatrists_id != null ? String(row.psychiatrists_id) : ''
+          sender = row.psychiatrist_id != null ? String(row.psychiatrist_id) : ''
         }
       }
 
@@ -66,7 +82,7 @@ async function loadConversationHistory(context, limit = 100) {
         messageId: String(row.message_id),
         sender,
         text: String(text),
-        timestamp: toIsoString(row.sent_at),
+        timestamp: row.sent_at ? toIsoString(row.sent_at) : null,
         fromRole,
       }
     })
@@ -77,10 +93,10 @@ async function persistMessage(context, text) {
   const isStudentSender = context.role === 'student'
   const sentMessage = isStudentSender ? text : null
   const receivedMessage = isStudentSender ? null : text
-  const studentsId = context.role === 'student' ? Number(context.userId) : Number(context.peerUserId)
-  const mentorsId =
+  const studentId = context.role === 'student' ? Number(context.userId) : Number(context.peerUserId)
+  const mentorId =
     context.role === 'mentor' ? Number(context.userId) : context.peerRole === 'mentor' ? Number(context.peerUserId) : null
-  const psychiatristsId =
+  const psychiatristId =
     context.role === 'psychiatrist'
       ? Number(context.userId)
       : context.peerRole === 'psychiatrist'
@@ -89,11 +105,11 @@ async function persistMessage(context, text) {
 
   const result = await dbPool.query(
     `
-    INSERT INTO messages (sent_message, received_message, sent_at, students_id, mentors_id, psychiatrists_id)
+    INSERT INTO messages (sent_message, received_message, sent_at, student_id, mentor_id, psychiatrist_id)
     VALUES ($1, $2, NOW(), $3, $4, $5)
     RETURNING message_id, sent_at
     `,
-    [sentMessage, receivedMessage, studentsId, mentorsId, psychiatristsId]
+    [sentMessage, receivedMessage, studentId, mentorId, psychiatristId]
   )
 
   return result.rows[0]

@@ -1,22 +1,29 @@
-const userSockets = new Map() // userId -> Set<WebSocket>
+const userSockets = new Map() // role:userId -> Set<WebSocket>
 
-function addSocketForUser(userId, ws) {
-  const current = userSockets.get(userId) || new Set()
-  current.add(ws)
-  userSockets.set(userId, current)
+function socketKey(role, userId) {
+  return `${String(role || '').toLowerCase()}:${String(userId || '')}`
 }
 
-function removeSocketForUser(userId, ws) {
-  const current = userSockets.get(userId)
+function addSocketForUser(role, userId, ws) {
+  const key = socketKey(role, userId)
+  const current = userSockets.get(key) || new Set()
+  current.add(ws)
+  userSockets.set(key, current)
+}
+
+function removeSocketForUser(role, userId, ws) {
+  const key = socketKey(role, userId)
+  const current = userSockets.get(key)
   if (!current) return
   current.delete(ws)
   if (current.size === 0) {
-    userSockets.delete(userId)
+    userSockets.delete(key)
   }
 }
 
-function deliverToUser(userId, payload) {
-  const targets = userSockets.get(userId)
+function deliverToUser(role, userId, payload) {
+  const key = socketKey(role, userId)
+  const targets = userSockets.get(key)
   if (!targets) return
   targets.forEach((client) => {
     if (client.readyState === require('ws').OPEN) {

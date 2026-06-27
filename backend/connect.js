@@ -12,7 +12,7 @@ const pool = new Pool({
 
 async function getStudentById(studentsId) {
   const result = await pool.query(
-    'SELECT students_id, email, username FROM students WHERE student_id = $1 LIMIT 1',
+    'SELECT students_id, email, username FROM students WHERE students_id = $1 LIMIT 1',
     [Number(studentsId)]
   )
   return result.rows[0] || null
@@ -20,7 +20,7 @@ async function getStudentById(studentsId) {
 
 async function getMentorById(mentorsId) {
   const result = await pool.query(
-    'SELECT mentors_id, email, full_name FROM mentors WHERE mentor_id = $1 LIMIT 1',
+    'SELECT mentors_id, email, full_name FROM mentors WHERE mentors_id = $1 LIMIT 1',
     [Number(mentorsId)]
   )
   return result.rows[0] || null
@@ -28,14 +28,14 @@ async function getMentorById(mentorsId) {
 
 async function getPsychiatristById(psychiatristsId) {
   const result = await pool.query(
-    'SELECT psychiatrists_id, email, full_name FROM psychiatrists WHERE psychiatrist_id = $1 LIMIT 1',
+    'SELECT psychiatrists_id, email, full_name FROM psychiatrists WHERE psychiatrists_id = $1 LIMIT 1',
     [Number(psychiatristsId)]
   )
   return result.rows[0] || null
 }
 async function getAdminById(adminId) {
   const result = await pool.query(
-    'SELECT admin_id, email,FROM admins WHERE admin_id = $1 LIMIT 1',
+    'SELECT admin_id, email FROM admins WHERE admin_id = $1 LIMIT 1',
     [Number(adminId)]
   )
   return result.rows[0] || null

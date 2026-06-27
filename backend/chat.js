@@ -18,11 +18,18 @@
 
   const joinModal = chatRoot.querySelector('#chat-join-modal');
   const joinForm = chatRoot.querySelector('#chat-join-form');
+  const peersWrap = document.createElement('div');
+  peersWrap.style.margin = '12px 0';
+  peersWrap.style.display = 'none';
+  peersWrap.innerHTML = '<strong>Conversations</strong><div id="peer-list" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>';
+  chatRoot.insertBefore(peersWrap, messagesEl);
+  const peerList = peersWrap.querySelector('#peer-list');
 
   // State
   let ws;
   let myRole = null;
   let myUserId = null;
+  let activePeer = { userId: null, role: null };
   const seenMessageIds = new Set();
 
   // Helpers
@@ -124,6 +131,36 @@
     };
   }
 
+  async function loadPeersFromDb(role, userId) {
+    if (role !== 'mentor' && role !== 'psychiatrist') return;
+    try {
+      const response = await fetch(`/api/chat/peers?role=${encodeURIComponent(role)}&userId=${encodeURIComponent(userId)}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || !Array.isArray(payload.peers)) return;
+      if (payload.peers.length === 0) return;
+
+      peersWrap.style.display = '';
+      peerList.innerHTML = '';
+      payload.peers.forEach((peer) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn-ghost-modal';
+        btn.textContent = `${peer.peer_role} ${peer.peer_user_id}`;
+        btn.addEventListener('click', () => {
+          activePeer = { userId: String(peer.peer_user_id), role: String(peer.peer_role) };
+          joinConversation();
+        });
+        peerList.appendChild(btn);
+      });
+
+      if (!activePeer.userId && payload.peers[0]) {
+        activePeer = { userId: String(payload.peers[0].peer_user_id), role: String(payload.peers[0].peer_role) };
+      }
+    } catch (_) {
+      // Ignore peer list errors and allow default join flow.
+    }
+  }
+
   function joinConversation() {
     const username = nameInput.value.trim();
 
@@ -135,22 +172,22 @@
     header.textContent = `${username} (connecting...)`;
 
     // Join to the server
+    let storedUser = {};
+    try {
+      storedUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}') || {};
+    } catch (_) {
+      storedUser = {};
+    }
+    const roleHint = storedUser.role || new URLSearchParams(window.location.search).get('role') || undefined;
+
     ws.send(
       JSON.stringify({
         type: 'join',
         userId: myUserId,
-        roleHint:
-          localStorage.getItem('tuliza_current_role') ||
-          new URLSearchParams(window.location.search).get('role') ||
-          undefined,
-        peerUserId:
-          localStorage.getItem('tuliza_chat_peer_id') ||
-          new URLSearchParams(window.location.search).get('peerId') ||
-          undefined,
-        peerRole:
-          localStorage.getItem('tuliza_chat_peer_role') ||
-          new URLSearchParams(window.location.search).get('peerRole') ||
-          undefined,
+        authToken: sessionStorage.getItem('tuliza_session_token') || undefined,
+        roleHint,
+        peerUserId: activePeer.userId || new URLSearchParams(window.location.search).get('peerId') || undefined,
+        peerRole: activePeer.role || new URLSearchParams(window.location.search).get('peerRole') || undefined,
       })
     );
 
@@ -199,14 +236,20 @@
   // Start
   connect();
 
-  // Auto-fill from dashboard/session when available.
-  const sessionUserId =
-    localStorage.getItem('tuliza_current_user_id') ||
-    new URLSearchParams(window.location.search).get('userId') ||
-    '';
+  // Auto-fill from logged in user when available.
+  let storedUser = null;
+  try {
+    storedUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+  } catch (_) {
+    storedUser = null;
+  }
+
+  const sessionUserId = storedUser?.userId || new URLSearchParams(window.location.search).get('userId') || '';
   if (sessionUserId) {
     nameInput.value = sessionUserId;
-    joinConversation();
+    loadPeersFromDb(storedUser?.role, sessionUserId).finally(() => {
+      joinConversation();
+    });
   }
 })();
 

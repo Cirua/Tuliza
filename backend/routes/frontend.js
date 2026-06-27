@@ -14,8 +14,11 @@ function setupFrontendRoutes(app, { projectRoot, frontendRoot }) {
   /* Serve frontend assets (styles/scripts/media) from root URL */
   app.use(require('express').static(frontendRoot))
 
-  /* Serve static files from the root directory */
-  app.use(require('express').static(projectRoot))
+  /* Expose only explicitly allowed additional static directories */
+  app.use('/public', require('express').static(path.join(projectRoot, 'public')))
+  app.get('/backend/chat.js', (req, res) => {
+    res.sendFile(path.join(projectRoot, 'backend', 'chat.js'))
+  })
 
 
   app.get('/', (req, res) => {

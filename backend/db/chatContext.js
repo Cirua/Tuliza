@@ -9,7 +9,7 @@ async function findByIdAcrossRoles(userIdNumber, roleHint) {
     checks.push(
       dbPool
         .query(
-          'SELECT students_id AS id, username AS display_name FROM students WHERE students_id = $1 LIMIT 1',
+          'SELECT student_id AS id, username AS display_name FROM students WHERE student_id = $1 LIMIT 1',
           [userIdNumber]
         )
         .then((res) => ({ role: 'student', rows: res.rows }))
@@ -20,7 +20,7 @@ async function findByIdAcrossRoles(userIdNumber, roleHint) {
     checks.push(
       dbPool
         .query(
-          'SELECT mentors_id AS id, full_name AS display_name FROM mentors WHERE mentors_id = $1 LIMIT 1',
+          'SELECT mentor_id AS id, full_name AS display_name FROM mentors WHERE mentor_id = $1 LIMIT 1',
           [userIdNumber]
         )
         .then((res) => ({ role: 'mentor', rows: res.rows }))
@@ -31,7 +31,7 @@ async function findByIdAcrossRoles(userIdNumber, roleHint) {
     checks.push(
       dbPool
         .query(
-          'SELECT psychiatrists_id AS id, full_name AS display_name FROM psychiatrists WHERE psychiatrists_id = $1 LIMIT 1',
+          'SELECT psychiatrist_id AS id, full_name AS display_name FROM psychiatrists WHERE psychiatrist_id = $1 LIMIT 1',
           [userIdNumber]
         )
         .then((res) => ({ role: 'psychiatrist', rows: res.rows }))
@@ -54,9 +54,9 @@ async function findLatestPeer(userId, role) {
   if (role === 'student') {
     const result = await dbPool.query(
       `
-      SELECT mentors_id, psychiatrists_id
+      SELECT mentor_id, psychiatrist_id
       FROM messages
-      WHERE students_id = $1
+      WHERE student_id = $1
       ORDER BY sent_at DESC NULLS LAST, message_id DESC
       LIMIT 1
       `,
@@ -65,18 +65,18 @@ async function findLatestPeer(userId, role) {
 
     const row = result.rows[0]
     if (!row) return { peerUserId: null, peerRole: null }
-    if (row.mentors_id != null) return { peerUserId: String(row.mentors_id), peerRole: 'mentor' }
-    if (row.psychiatrists_id != null)
-      return { peerUserId: String(row.psychiatrists_id), peerRole: 'psychiatrist' }
+    if (row.mentor_id != null) return { peerUserId: String(row.mentor_id), peerRole: 'mentor' }
+    if (row.psychiatrist_id != null)
+      return { peerUserId: String(row.psychiatrist_id), peerRole: 'psychiatrist' }
     return { peerUserId: null, peerRole: null }
   }
 
   if (role === 'mentor') {
     const result = await dbPool.query(
       `
-      SELECT students_id
+      SELECT student_id
       FROM messages
-      WHERE mentors_id = $1
+      WHERE mentor_id = $1
       ORDER BY sent_at DESC NULLS LAST, message_id DESC
       LIMIT 1
       `,
@@ -84,14 +84,14 @@ async function findLatestPeer(userId, role) {
     )
 
     const row = result.rows[0]
-    return { peerUserId: row?.students_id != null ? String(row.students_id) : null, peerRole: 'student' }
+    return { peerUserId: row?.student_id != null ? String(row.student_id) : null, peerRole: 'student' }
   }
 
   const result = await dbPool.query(
     `
-    SELECT students_id
+    SELECT student_id
     FROM messages
-    WHERE psychiatrists_id = $1
+    WHERE psychiatrist_id = $1
     ORDER BY sent_at DESC NULLS LAST, message_id DESC
     LIMIT 1
     `,
@@ -99,7 +99,7 @@ async function findLatestPeer(userId, role) {
   )
 
   const row = result.rows[0]
-  return { peerUserId: row?.students_id != null ? String(row.students_id) : null, peerRole: 'student' }
+  return { peerUserId: row?.student_id != null ? String(row.student_id) : null, peerRole: 'student' }
 }
 
 async function resolveParticipantContext(userId, roleHint, peerUserIdHint, peerRoleHint) {

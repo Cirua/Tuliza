@@ -4,6 +4,7 @@ const express = require('express')
 require('dotenv').config({ path: path.join(__dirname, '.env') })
 
 const { dbPool } = require('./db/pool')
+const { initializeDatabase } = require('./db/init')
 const { isAllowedOrigin } = require('./config')
 
 const { setupFrontendRoutes } = require('./routes/frontend')
@@ -53,5 +54,13 @@ function startServer(port, attempt = 1) {
   })
 }
 
-startServer(basePort)
+initializeDatabase(dbPool)
+  .then(() => {
+    console.log('Database initialized')
+    startServer(basePort)
+  })
+  .catch((err) => {
+    console.error('Database initialization failed:', err.message)
+    process.exit(1)
+  })
 

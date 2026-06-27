@@ -132,27 +132,27 @@
         <div class="mood-card fade-up fade-up-delay-2">
           <h3>Quick mood check-in</h3>
           <div class="mood-grid" role="group" aria-label="Select your current mood">
-            <button class="mood-btn" data-mood="great" onclick="selectMood(this)" aria-pressed="false">
+            <button class="mood-btn" data-mood="great" aria-pressed="false">
               <span class="mood-emoji" aria-hidden="true">:-)</span>
               Great
             </button>
-            <button class="mood-btn selected" data-mood="calm" onclick="selectMood(this)" aria-pressed="true">
+            <button class="mood-btn selected" data-mood="calm" aria-pressed="true">
               <span class="mood-emoji" aria-hidden="true">:)</span>
               Calm
             </button>
-            <button class="mood-btn" data-mood="low" onclick="selectMood(this)" aria-pressed="false">
+            <button class="mood-btn" data-mood="low" aria-pressed="false">
               <span class="mood-emoji" aria-hidden="true">:(</span>
               Low
             </button>
-            <button class="mood-btn" data-mood="anxious" onclick="selectMood(this)" aria-pressed="false">
+            <button class="mood-btn" data-mood="anxious" aria-pressed="false">
               <span class="mood-emoji" aria-hidden="true">:o</span>
               Anxious
             </button>
-            <button class="mood-btn" data-mood="stressed" onclick="selectMood(this)" aria-pressed="false">
+            <button class="mood-btn" data-mood="stressed" aria-pressed="false">
               <span class="mood-emoji" aria-hidden="true">:/</span>
               Stressed
             </button>
-            <button class="mood-btn" data-mood="numb" onclick="selectMood(this)" aria-pressed="false">
+            <button class="mood-btn" data-mood="numb" aria-pressed="false">
               <span class="mood-emoji" aria-hidden="true">:|</span>
               Numb
             </button>
@@ -213,7 +213,7 @@
               Last entry: <strong>2 days ago</strong><br>
               Writing helps you make sense of your thoughts in a safe, private space.
             </p>
-            <button class="btn-outline-accent" onclick="window.location.href='journal.html'">Open journal -&gt;</button>
+            <a class="btn-outline-accent" href="journal.html">Open journal -&gt;</a>
           </div>
         </div>
 
@@ -259,7 +259,7 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-ghost-modal" onclick="document.getElementById('booking-modal').style.display='none'">Cancel</button>
+        <a class="btn-ghost-modal" href="tuliza-frontend.html">Cancel</a>
         <button class="btn-primary">Continue to payment -&gt;</button>
       </div>
     </div>
@@ -290,7 +290,7 @@
 
       <div class="modal-actions" style="margin-top:20px">
         <a class="btn-primary" style="background:var(--danger)" href="tel:999">Call now</a>
-        <button class="btn-ghost-modal" onclick="document.getElementById('crisis-modal').style.display='none'">Close</button>
+        <a class="btn-ghost-modal" href="tuliza-frontend.html">Close</a>
       </div>
     </div>
   </div>
@@ -311,201 +311,6 @@
       </div>
     </div>
   </div>
-
-
-  <script>
-    const moodStorageKey = 'tuliza_dashboard_mood';
-    const journalDateStorageKey = 'tuliza_last_journal_date';
-    const tourStorageKey = 'tuliza_tour_done';
-
-    const summaryMood = document.getElementById('summary-mood');
-    const summaryJournal = document.getElementById('summary-journal');
-    const summaryNext = document.getElementById('summary-next');
-
-    const tourModal = document.getElementById('tour-modal');
-    const tourStepLabel = document.getElementById('tour-step-label');
-    const tourTitle = document.getElementById('tour-title');
-    const tourBody = document.getElementById('tour-body');
-    const tourProgressBar = document.getElementById('tour-progress-bar');
-    const tourSkipBtn = document.getElementById('tour-skip-btn');
-    const tourNextBtn = document.getElementById('tour-next-btn');
-    const openTourBtn = document.getElementById('open-tour-btn');
-
-    const tourSteps = [
-      {
-        title: 'Welcome to Tuliza',
-        body: 'Start with a quick mood check-in so your dashboard can personalize support suggestions.'
-      },
-      {
-        title: 'Talk or book support',
-        body: 'Use "Talk to a counselor" for private anonymous chat, or "Book a therapy session" for in-person support.'
-      },
-      {
-        title: 'Use the journal',
-        body: 'Capture thoughts in your private journal. Reflection helps identify stress patterns over time.'
-      },
-      {
-        title: 'Explore practical resources',
-        body: 'Open short resource guides for exams, anxiety, sleep, and grounding techniques you can apply today.'
-      }
-    ];
-
-    let currentTourIndex = 0;
-
-    function capitalizeMood(value) {
-      if (!value) return 'Calm';
-      return value.charAt(0).toUpperCase() + value.slice(1);
-    }
-
-    function formatJournalDate(value) {
-      if (!value) return 'No entries yet';
-      const parsed = new Date(value);
-      if (Number.isNaN(parsed.getTime())) return 'No entries yet';
-      return parsed.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-    function nextActionByMood(mood) {
-      const suggestions = {
-        great: 'Keep momentum with a short gratitude journal entry',
-        calm: 'Try a 2-minute breathing reset',
-        low: 'Open your journal and write one gentle check-in',
-        anxious: 'Start the calm reset resource now',
-        stressed: 'Book a short session or try the exam pressure guide',
-        numb: 'Try one grounding exercise from resources'
-      };
-      return suggestions[mood] || suggestions.calm;
-    }
-
-    function updateDashboardSummary() {
-      const mood = localStorage.getItem(moodStorageKey) || 'calm';
-      const lastJournalDate = localStorage.getItem(journalDateStorageKey);
-
-      summaryMood.textContent = capitalizeMood(mood);
-      summaryJournal.textContent = formatJournalDate(lastJournalDate);
-      summaryNext.textContent = nextActionByMood(mood);
-    }
-
-    function renderTourStep() {
-      const step = tourSteps[currentTourIndex];
-      const stepNumber = currentTourIndex + 1;
-      const totalSteps = tourSteps.length;
-      tourStepLabel.textContent = `Step ${stepNumber} of ${totalSteps}`;
-      tourTitle.textContent = step.title;
-      tourBody.textContent = step.body;
-      tourProgressBar.style.width = `${(stepNumber / totalSteps) * 100}%`;
-      tourNextBtn.textContent = stepNumber === totalSteps ? 'Finish' : 'Next';
-    }
-
-    function openTour() {
-      currentTourIndex = 0;
-      renderTourStep();
-      tourModal.style.display = 'flex';
-    }
-
-    function closeTour(markDone) {
-      tourModal.style.display = 'none';
-      if (markDone) localStorage.setItem(tourStorageKey, '1');
-    }
-
-    function applyMoodTheme(mood) {
-      if (!mood) {
-        document.body.removeAttribute('data-mood');
-        return;
-      }
-      document.body.setAttribute('data-mood', mood);
-      localStorage.setItem(moodStorageKey, mood);
-    }
-
-    function selectMood(btn) {
-      document.querySelectorAll('.mood-btn').forEach(b => {
-        b.classList.remove('selected');
-        b.setAttribute('aria-pressed', 'false');
-      });
-      btn.classList.add('selected');
-      btn.setAttribute('aria-pressed', 'true');
-      applyMoodTheme(btn.dataset.mood);
-      updateDashboardSummary();
-    }
-
-    const rememberedMood = localStorage.getItem(moodStorageKey);
-    if (rememberedMood) {
-      const rememberedBtn = document.querySelector(`.mood-btn[data-mood="${rememberedMood}"]`);
-      if (rememberedBtn) {
-        selectMood(rememberedBtn);
-      }
-    } else {
-      applyMoodTheme(document.querySelector('.mood-btn.selected')?.dataset.mood || 'calm');
-    }
-
-    updateDashboardSummary();
-
-    openTourBtn.addEventListener('click', openTour);
-    tourSkipBtn.addEventListener('click', () => closeTour(true));
-    tourNextBtn.addEventListener('click', () => {
-      if (currentTourIndex < tourSteps.length - 1) {
-        currentTourIndex += 1;
-        renderTourStep();
-        return;
-      }
-      closeTour(true);
-    });
-
-    if (!localStorage.getItem(tourStorageKey)) {
-      setTimeout(openTour, 350);
-    }
-
-    const actionBtns = document.querySelectorAll('.action-btn');
-    actionBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.classList.contains('primary')) {
-          window.location.href = 'chat-ui.html';
-        }
-        if (btn.classList.contains('secondary')) {
-          document.getElementById('booking-modal').style.display = 'flex';
-        }
-      });
-    });
-
-    document.querySelector('.emergency-btn').addEventListener('click', () => {
-      document.getElementById('crisis-modal').style.display = 'flex';
-    });
-
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) overlay.style.display = 'none';
-      });
-    });
-
-    document.querySelectorAll('.sidebar-item').forEach(item => {
-      item.addEventListener('click', () => {
-        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-
-        const targetModal = item.dataset.modal;
-        const targetLink = item.dataset.link;
-
-        if (targetModal) {
-          document.getElementById(targetModal).style.display = 'flex';
-          return;
-        }
-        if (targetLink) {
-          window.location.href = targetLink;
-        }
-      });
-    });
-
-    document.querySelectorAll('.resource-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const topic = item.dataset.topic;
-        if (topic) {
-          window.location.href = `resource-detail.html?topic=${encodeURIComponent(topic)}`;
-        }
-      });
-      item.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') item.click();
-      });
-    });
-  </script>
 
 </body>
 </html>

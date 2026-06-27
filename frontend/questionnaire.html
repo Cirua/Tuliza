@@ -181,133 +181,74 @@
   </main>
 
   <script>
-    function getProfessionals() {
-      return [
-        { id: 'P-101', name: 'Dr. Aisha Kamau', role: 'Psychologist', tone: 'gentle', structure: 'structured', style: 'formal', christianBased: true, spiritualFriendly: true },
-        { id: 'P-122', name: 'Mr. Brian Otieno', role: 'Psychologist', tone: 'direct', structure: 'structured', style: 'formal', christianBased: false, spiritualFriendly: true },
-        { id: 'M-031', name: 'Lynn Wanjiru', role: 'Mentor', tone: 'gentle', structure: 'flexible', style: 'casual', christianBased: true, spiritualFriendly: true },
-        { id: 'M-048', name: 'Kevin Muriuki', role: 'Mentor', tone: 'direct', structure: 'flexible', style: 'casual', christianBased: false, spiritualFriendly: false }
-      ];
-    }
-
-    function compatibilityScore(user, professional) {
-      let score = 35;
-      if (user.roleChoice === 'Either' || professional.role === user.roleChoice) score += 20;
-      if (user.tone === 'balanced' || professional.tone === user.tone) score += 15;
-      if (user.structure === 'balanced' || professional.structure === user.structure) score += 15;
-      if (user.style === 'balanced' || professional.style === user.style) score += 15;
-      if (user.christianMatch === 'open') score += 5;
-      if (user.christianMatch === 'yes' && professional.christianBased) score += 10;
-      if (user.christianMatch === 'no' && !professional.christianBased) score += 8;
-      if (user.spiritual !== 'no' && professional.spiritualFriendly) score += 5;
-      return Math.min(99, score);
-    }
-
-    const roleGuardMessage = document.getElementById('role-guard-message');
-    const signedUp = JSON.parse(localStorage.getItem('tuliza_signup_user') || '{}');
-    if (!signedUp || signedUp.role !== 'student') {
-      roleGuardMessage.style.display = 'block';
-      roleGuardMessage.textContent = 'This questionnaire is for student signups. Redirecting to account page...';
-      setTimeout(() => {
-        window.location.href = 'account.html';
-      }, 1200);
-    }
-
-    const slides = Array.from(document.querySelectorAll('.question-slide'));
-    const progress = document.getElementById('slide-progress');
-    const progressBar = document.getElementById('slide-progress-bar');
+    const prefsForm = document.getElementById('prefs-form');
     const prevBtn = document.getElementById('prev-slide');
     const nextBtn = document.getElementById('next-slide');
     const submitBtn = document.getElementById('submit-slides');
-    const prefsForm = document.getElementById('prefs-form');
     const studentResult = document.getElementById('student-result');
-    let currentSlide = 0;
 
-    function validateCurrentSlide() {
-      const fields = slides[currentSlide].querySelectorAll('input[required], select[required], textarea[required]');
-      for (const field of fields) {
-        if (!field.value || !field.checkValidity()) {
-          field.reportValidity();
-          return false;
-        }
-      }
-      return true;
+    let sessionUser = null;
+    try {
+      sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+    } catch (_) {
+      sessionUser = null;
     }
 
-    function updateSlides() {
-      slides.forEach((slide, idx) => {
-        slide.style.display = idx === currentSlide ? '' : 'none';
-      });
-      progress.textContent = `Question ${currentSlide + 1} of ${slides.length}`;
-      progressBar.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
-      prevBtn.disabled = currentSlide === 0;
-      nextBtn.style.display = currentSlide === slides.length - 1 ? 'none' : 'inline-flex';
-      submitBtn.style.display = currentSlide === slides.length - 1 ? 'inline-flex' : 'none';
+    if (!sessionUser || sessionUser.role !== 'student' || !sessionUser.userId) {
+      window.location.href = 'account.html';
     }
 
-    prevBtn.addEventListener('click', () => {
-      if (currentSlide > 0) {
-        currentSlide -= 1;
-        updateSlides();
-      }
+    const slides = Array.from(document.querySelectorAll('.question-slide'));
+    slides.forEach((slide) => {
+      slide.style.display = '';
     });
 
-    nextBtn.addEventListener('click', () => {
-      if (!validateCurrentSlide()) return;
-      if (currentSlide < slides.length - 1) {
-        currentSlide += 1;
-        updateSlides();
-      }
-    });
+    submitBtn.style.display = 'inline-flex';
+    nextBtn.style.display = 'none';
+    prevBtn.style.display = 'none';
 
-    prefsForm.addEventListener('submit', (e) => {
+    prefsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!validateCurrentSlide()) return;
 
-      const user = {
+      const answers = {
         gender: document.getElementById('q-gender').value,
-        age: Number(document.getElementById('q-age').value),
-        status: document.getElementById('q-status').value,
+        age: document.getElementById('q-age').value,
+        relationshipStatus: document.getElementById('q-status').value,
         religionImportance: document.getElementById('q-religion-importance').value,
-        religion: document.getElementById('q-religion').value.trim(),
+        religion: document.getElementById('q-religion').value,
         christianMatch: document.getElementById('q-christian-match').value,
         spiritual: document.getElementById('q-spiritual').value,
         therapyBefore: document.getElementById('q-therapy-before').value,
-        whyNow: document.getElementById('q-why-now').value.trim(),
-        expectations: document.getElementById('q-expectations').value.trim(),
+        whyNow: document.getElementById('q-why-now').value,
+        expectations: document.getElementById('q-expectations').value,
         tone: document.getElementById('q-tone').value,
         structure: document.getElementById('q-structure').value,
         style: document.getElementById('q-style').value,
-        roleChoice: document.getElementById('q-role').value
+        preferredProfessional: document.getElementById('q-role').value,
       };
 
-      const ranked = getProfessionals()
-        .filter((p) => user.roleChoice === 'Either' || p.role === user.roleChoice)
-        .map((p) => ({ ...p, score: compatibilityScore(user, p) }))
-        .sort((a, b) => b.score - a.score);
+      try {
+        const response = await fetch('/api/questionnaire', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ studentId: sessionUser.userId, answers }),
+        });
 
-      const top = ranked[0];
-      const backup = ranked[1] || null;
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          studentResult.style.display = 'block';
+          studentResult.textContent = payload.error || 'Failed to save questionnaire.';
+          return;
+        }
 
-      localStorage.setItem('tuliza_student_preferences', JSON.stringify({
-        ...user,
-        topMatch: top,
-        backupMatch: backup,
-        createdAt: new Date().toISOString(),
-      }));
-
-      studentResult.style.display = 'block';
-      studentResult.innerHTML = '<h3 style="margin-bottom:8px;color:var(--plum)">Recommended assignment</h3>'
-        + '<strong>Primary:</strong> ' + top.role + ' - ' + top.name + ' (' + top.score + '%)<br>'
-        + (backup ? '<strong>Alternative:</strong> ' + backup.name + ' (' + backup.score + '%)<br>' : '')
-        + '<br><em>Saved successfully. Redirecting to dashboard...</em>';
-
-      setTimeout(() => {
-        window.location.href = 'tuliza-frontend.html';
-      }, 1400);
+        studentResult.style.display = 'block';
+        studentResult.textContent = payload.message || 'Questionnaire saved. Redirecting...';
+        window.location.href = 'student.html';
+      } catch (_) {
+        studentResult.style.display = 'block';
+        studentResult.textContent = 'Could not reach server.';
+      }
     });
-
-    updateSlides();
   </script>
 </body>
 </html>

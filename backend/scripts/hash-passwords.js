@@ -6,6 +6,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') })
 const { dbPool } = require('../db/pool')
 
 const BCRYPT_PREFIX = /^\$2[aby]\$\d{2}\$/
+const BCRYPT_FULL = /^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/
 
 const TABLES = [
   { table: 'students', idColumn: 'students_id' },
@@ -45,11 +46,11 @@ async function ensurePasswordHashColumn(tableName) {
 }
 
 function pickSourcePassword(row, hasPasswordColumn) {
-  if (row.password_hash && !BCRYPT_PREFIX.test(row.password_hash)) {
-    return String(row.password_hash)
-  }
   if (hasPasswordColumn && row.password) {
     return String(row.password)
+  }
+  if (row.password_hash && !BCRYPT_PREFIX.test(row.password_hash)) {
+    return String(row.password_hash)
   }
   return null
 }
@@ -72,7 +73,7 @@ async function migrateTable({ table, idColumn }) {
 
   let updated = 0
   for (const row of rows) {
-    if (row.password_hash && BCRYPT_PREFIX.test(row.password_hash)) continue
+    if (row.password_hash && BCRYPT_FULL.test(row.password_hash)) continue
 
     const sourcePassword = pickSourcePassword(row, hasPasswordColumn)
     if (!sourcePassword) continue
@@ -106,8 +107,16 @@ async function main() {
     console.error('Password hash migration failed:', err.message)
     process.exitCode = 1
   } finally {
-    await dbPool.end()
+    try {
+      await dbPool.end()
+    } catch (endError) {
+      console.error('Failed to close database pool:', endError.message)
+      if (!process.exitCode) process.exitCode = 1
+    }
   }
 }
 
-main()
+main().catch((err) => {
+  console.error('Unexpected migration error:', err.message)
+  process.exitCode = 1
+})

@@ -4,6 +4,7 @@ const { resolveParticipantContext } = require('../db/chatContext')
 const { loadConversationHistory, persistMessage } = require('../db/messages')
 const { deliverToUser, addSocketForUser, removeSocketForUser } = require('./users')
 const { toIsoString, roleLabel } = require('../config')
+const { verifySessionToken } = require('../auth/sessionToken')
 
 
 function setupWebSocket(server, { isAllowedOrigin }) {
@@ -65,9 +66,19 @@ function setupWebSocket(server, { isAllowedOrigin }) {
         if (!userId) return
 
         const expectedToken = process.env.TULIZA_WS_TOKEN
-        if (expectedToken && authToken !== expectedToken) {
-          ws.close(1008, 'Unauthorized')
-          return
+        const hasStaticToken = Boolean(expectedToken)
+        const hasSessionSecret = Boolean(process.env.TULIZA_SESSION_SECRET)
+        let sessionClaims = null
+        if (hasStaticToken || hasSessionSecret) {
+          const staticTokenOk = hasStaticToken && authToken === expectedToken
+          if (!staticTokenOk) {
+            sessionClaims = verifySessionToken(authToken)
+          }
+
+          if (!staticTokenOk && !sessionClaims) {
+            ws.close(1008, 'Unauthorized')
+            return
+          }
         }
 
         let context
@@ -84,9 +95,20 @@ function setupWebSocket(server, { isAllowedOrigin }) {
           return
         }
 
+        if (sessionClaims) {
+          if (String(sessionClaims.userId) !== String(context.userId) || String(sessionClaims.role) !== String(context.role)) {
+            ws.close(1008, 'Unauthorized identity')
+            return
+          }
+        }
+
+        if (ws.userContext) {
+          removeSocketForUser(ws.userContext.role, ws.userContext.userId, ws)
+        }
+
         ws.isAuthorized = true
         ws.userContext = context
-        addSocketForUser(context.userId, ws)
+        addSocketForUser(context.role, context.userId, ws)
 
         ws.send(
           JSON.stringify({
@@ -145,14 +167,14 @@ function setupWebSocket(server, { isAllowedOrigin }) {
         toUserId: String(ws.userContext.peerUserId),
       }
 
-      deliverToUser(ws.userContext.userId, outboundMessage)
-      deliverToUser(ws.userContext.peerUserId, outboundMessage)
+      deliverToUser(ws.userContext.role, ws.userContext.userId, outboundMessage)
+      deliverToUser(ws.userContext.peerRole, ws.userContext.peerUserId, outboundMessage)
     })
 
     ws.on('close', () => {
       const ctx = ws.userContext
       if (!ctx) return
-      removeSocketForUser(ctx.userId, ws)
+      removeSocketForUser(ctx.role, ctx.userId, ws)
     })
   })
 
