@@ -46,9 +46,14 @@ function toIsoString(value) {
   return dateValue.toISOString()
 }
 
-app.get('/frontend/chat-ui.html', (req, res) => {
-  res.redirect('/')
-})
+const frontendPages = new Set([
+  'tuliza-frontend.html',
+  'chat-ui.html',
+  'resources.html',
+  'resource-detail.html',
+  'journal.html',
+  'account.html',
+])
 
 /* Serve static files from the root directory */
 app.use(express.static(projectRoot))
@@ -56,6 +61,26 @@ app.use(express.static(projectRoot))
 /* Route to serve HTML file from root directory */
 app.get('/', (req, res) => {
   res.sendFile(path.join(projectRoot, 'frontend', 'tuliza-frontend.html'))
+})
+
+// Support clean page URLs such as /chat-ui.html used by navbar links.
+app.get('/:page', (req, res, next) => {
+  const { page } = req.params
+  if (!frontendPages.has(page)) {
+    next()
+    return
+  }
+  res.sendFile(path.join(projectRoot, 'frontend', page))
+})
+
+// Keep compatibility with direct /frontend/*.html links.
+app.get('/frontend/:page', (req, res, next) => {
+  const { page } = req.params
+  if (!frontendPages.has(page)) {
+    next()
+    return
+  }
+  res.sendFile(path.join(projectRoot, 'frontend', page))
 })
 
 /* Route to indicate chat server is running */

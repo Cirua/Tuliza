@@ -1,24 +1,42 @@
-import pg from "pg";
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '.env') })
+const { Pool } = require('pg')
 
-const pool = new pg.Pool({
+const pool = new Pool({
   host: process.env.PG_HOST,
-  port: process.env.PG_PORT,
+  port: Number(process.env.PG_PORT || 5432),
   user: process.env.PG_USER,
   password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE,
 })
 
-export default pool;
-
-async function getUsers() {
-  try {
-    // Use parameterized queries ($1, $2) to prevent SQL injection
-    const res = await pool.query('SELECT * FROM users WHERE email = $1', ['user@example.com']);
-    console.log(res.rows); // This is an array containing the result rows
-    return res.rows;
-  } catch (err) {
-    console.error('Error executing query', err.stack);
-  }
+async function getStudentById(studentsId) {
+  const result = await pool.query(
+    'SELECT students_id, email, username FROM students WHERE students_id = $1 LIMIT 1',
+    [Number(studentsId)]
+  )
+  return result.rows[0] || null
 }
 
-getUsers();
+async function getMentorById(mentorsId) {
+  const result = await pool.query(
+    'SELECT mentors_id, email, full_name FROM mentors WHERE mentors_id = $1 LIMIT 1',
+    [Number(mentorsId)]
+  )
+  return result.rows[0] || null
+}
+
+async function getPsychiatristById(psychiatristsId) {
+  const result = await pool.query(
+    'SELECT psychiatrists_id, email, full_name FROM psychiatrists WHERE psychiatrists_id = $1 LIMIT 1',
+    [Number(psychiatristsId)]
+  )
+  return result.rows[0] || null
+}
+
+module.exports = {
+  pool,
+  getStudentById,
+  getMentorById,
+  getPsychiatristById,
+}
