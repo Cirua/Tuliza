@@ -1,7 +1,29 @@
 {
+  "name": "tuliza",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "server": "node backend/server.js",
+    "dev": "nodemon backend/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cirua/tuliza.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Cirua/tuliza/issues"
+  },
+  "homepage": "https://github.com/Cirua/tuliza#readme",
   "dependencies": {
+    "dotenv": "^16.4.5",
     "express": "^5.2.1",
-    "init": "^0.1.2",
-    "socket.io": "^4.8.3"
+    "pg": "^8.13.1",
+    "ws": "^8.21.0"
   }
 }

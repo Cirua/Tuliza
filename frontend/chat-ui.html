@@ -54,27 +54,13 @@
             <div class="modal-header">
               <div class="modal-eyebrow">Student ↔ Mentor/Psychiatrist</div>
               <h2 class="modal-title">Join conversation</h2>
-              <p class="modal-subtitle">Pick your role and connect to start messaging.</p>
+              <p class="modal-subtitle">Enter your user ID. Role and recipient are resolved automatically.</p>
             </div>
 
             <form id="chat-join-form" class="auth-card" style="box-shadow:none; border:none;">
               <div class="form-group">
-                <label class="form-label" for="chat-username">Your display name</label>
-                <input id="chat-username" class="form-input" type="text" required placeholder="e.g., Starling_92" />
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="chat-role">Role</label>
-                <select id="chat-role" class="form-select" required>
-                  <option value="student">Student</option>
-                  <option value="mentor">Mentor</option>
-                  <option value="psychiatrist">Psychiatrist</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label class="form-label" for="chat-targetStudent">Target student (Mentor/Psychiatrist replies)</label>
-                <input id="chat-targetStudent" class="form-input" type="text" placeholder="Must match the student's display name" />
+                <label class="form-label" for="chat-username">Your user ID</label>
+                <input id="chat-username" class="form-input" type="text" required placeholder="e.g., STU-001" />
               </div>
 
               <div class="modal-actions">
@@ -87,7 +73,7 @@
     </main>
   </div>
 
-  <script src="chat.js"></script>
+  <script src="/backend/chat.js"></script>
 </body>
 </html>
 
