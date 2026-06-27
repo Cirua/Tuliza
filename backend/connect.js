@@ -33,6 +33,13 @@ async function getPsychiatristById(psychiatristsId) {
   )
   return result.rows[0] || null
 }
+async function getAdminById(adminId) {
+  const result = await pool.query(
+    'SELECT admin_id, email FROM admins WHERE admin_id = $1 LIMIT 1',
+    [Number(adminId)]
+  )
+  return result.rows[0] || null
+}
 
 module.exports = {
   pool,
