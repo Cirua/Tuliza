@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tuliza - Create Account</title>
+  <title>Tuliza - Account Access</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,222 +19,259 @@
       </div>
       <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
     </a>
+
     <div class="nav-tabs" role="navigation" aria-label="Section links">
       <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
-      <a class="nav-tab" href="chat-ui.html">Chat</a>
+      <a class="nav-tab" href="chat.html">Chat</a>
       <a class="nav-tab" href="resources.html">Resources</a>
       <a class="nav-tab" href="journal.html">Journal</a>
       <a class="nav-tab active" href="account.html" aria-current="page">Account</a>
     </div>
   </nav>
 
-  <main class="account-main">
-    <section class="account-layout fade-up">
-      <aside class="match-info-card">
-        <span class="match-eyebrow">Find your fit</span>
-        <h1 class="auth-title">Get matched with the right support person</h1>
-        <p class="auth-sub">Answer a short guided questionnaire and we will match you with a compatible therapist or mentor based on your preferences, communication style, and background.</p>
+  <main class="auth-main fade-up">
+    <section class="auth-hero-card fade-up">
+      <span class="match-eyebrow">Anonymous first</span>
+      <h1>Login or create your Tuliza account</h1>
+      <p class="subtitle">No personal details are required. Use an alias, choose your role, and continue.</p>
+      <div class="auth-role-preview" role="navigation" aria-label="Role pages">
+        <a href="tuliza-frontend.html" class="role-chip">Student page</a>
+        <a href="mentor.html" class="role-chip">Mentor page</a>
+        <a href="psychologist.html" class="role-chip">Psychiatrist page</a>
+        <a href="admin.html" class="role-chip">Admin page</a>
+      </div>
+    </section>
 
-        <div class="trust-points">
-          <div class="trust-item">Private and secure support journey</div>
-          <div class="trust-item">Match based on style and compatibility</div>
-          <div class="trust-item">Switch support person if needed</div>
-        </div>
+    <section class="auth-layout fade-up fade-up-delay-1">
+      <aside class="auth-side-panel">
+        <h2>Access flow</h2>
+        <ul class="role-list">
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="logo" href="tuliza-frontend.html">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+    </a>
 
-        <div class="how-it-works">
-          <h3>How it works</h3>
-          <ol class="steps-list">
-            <li>Create your account.</li>
-            <li>Complete the compatibility slideshow.</li>
-            <li>Receive your best-fit match instantly.</li>
-          </ol>
-        </div>
+    <div class="nav-tabs" role="navigation" aria-label="Section links">
+      <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
+      <a class="nav-tab" href="chat.html">Chat</a>
+      <a class="nav-tab" href="resources.html">Resources</a>
+      <a class="nav-tab" href="journal.html">Journal</a>
+      <a class="nav-tab active" href="account.html" aria-current="page">Account</a>
+    </div>
+  </nav>
+
+  <main class="auth-main fade-up">
+    <section class="auth-hero-card fade-up">
+      <span class="match-eyebrow">Anonymous first</span>
+      <h1>Login or create your Tuliza account</h1>
+      <p class="subtitle">No personal name is required. Use a private alias, choose role, and continue to the correct dashboard.</p>
+      <div class="auth-role-preview" role="navigation" aria-label="Role pages">
+        <a href="tuliza-frontend.html" class="role-chip">Student dashboard</a>
+        <a href="mentor.html" class="role-chip">Mentor dashboard</a>
+        <a href="psychologist.html" class="role-chip">Psychiatrist dashboard</a>
+        <a href="admin.html" class="role-chip">Admin dashboard</a>
+      </div>
+    </section>
+
+    <section class="auth-layout fade-up fade-up-delay-1">
+      <aside class="auth-side-panel">
+        <h2>How access works</h2>
+        <ul class="role-list">
+          <li class="role-list-item"><div><strong>Step 1</strong><p>Choose login or sign up</p></div></li>
+          <li class="role-list-item"><div><strong>Step 2</strong><p>Select your role: student, mentor, psychiatrist, or admin</p></div></li>
+          <li class="role-list-item"><div><strong>Step 3</strong><p>Students complete matching questionnaire after sign up</p></div></li>
+          <li class="role-list-item"><div><strong>Step 4</strong><p>Mentors/Psychiatrists complete values profile for smarter assignment</p></div></li>
+        </ul>
+        <p class="role-help-text">For production, save all submissions through backend APIs and enforce role permissions server-side.</p>
       </aside>
 
-      <section class="auth-card">
-        <h2 class="auth-title">Create your account</h2>
-        <p class="auth-sub">Start with your basic details, then continue to the compatibility slideshow.</p>
+      <section class="auth-card auth-portal-card">
+        <div class="auth-tab-row" role="tablist" aria-label="Authentication type">
+          <button class="auth-tab active" id="tab-login" data-tab="login" role="tab" aria-selected="true" type="button">Login</button>
+          <button class="auth-tab" id="tab-signup" data-tab="signup" role="tab" aria-selected="false" type="button">Sign up</button>
+        </div>
 
-        <form id="signup-form">
-          <div class="form-group">
-            <label class="form-label" for="acc-name">Full name</label>
-            <input class="form-input" id="acc-name" required type="text" />
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label" for="acc-year">Year of study</label>
-            <select class="form-select" id="acc-year" required>
-              <option value="">Select year</option>
-              <option>1st year</option>
-              <option>2nd year</option>
-              <option>3rd year</option>
-              <option>4th year</option>
-              <option>Postgraduate</option>
-            </select>
-          </div>
-          <button class="btn-primary" type="submit">Continue to slideshow</button>
-        </form>
+        <div class="auth-pane" id="pane-login">
+          <h2 class="auth-title">Welcome back</h2>
+          <p class="auth-sub">Login with email, role, and password.</p>
+          <form id="login-form">
+            <div class="form-group">
+              <label class="form-label" for="login-alias">Email</label>
+              <input class="form-input" id="login-alias" required type="text" placeholder="e.g. Starling_92" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-role">Role</label>
+              <select class="form-select" id="login-role" required>
+                <option value="">Select role</option>
+                <option value="student">Student</option>
+                <option value="mentor">Mentor</option>
+                <option value="psychiatrist">Psychiatrist</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-password">Password</label>
+              <input class="form-input" id="login-password" required type="password" minlength="6" placeholder="At least 6 characters" />
+            </div>
+            <button class="btn-primary" type="submit">Login and continue</button>
+          </form>
+        </div>
+
+        <div class="auth-pane" id="pane-signup" style="display:none;">
+          <h2 class="auth-title">Create anonymous account</h2>
+          <p class="auth-sub">No personal details required. Pick an alias, role, and secure password.</p>
+          <form id="signup-form">
+            <div class="form-group">
+              <label class="form-label" for="signup-alias">Anonymous alias</label>
+              <input class="form-input" id="signup-alias" required type="text" placeholder="e.g. QuietOrbit_21" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-role">Role</label>
+              <select class="form-select" id="signup-role" required>
+                <option value="">Select role</option>
+                <option value="student">Student</option>
+                <option value="mentor">Mentor</option>
+                <option value="psychiatrist">Psychiatrist</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-password">Password</label>
+              <input class="form-input" id="signup-password" required type="password" minlength="6" placeholder="At least 6 characters" />
+            </div>
+            <button class="btn-primary" type="submit">Create account</button>
+          </form>
+        </div>
       </section>
     </section>
 
-    <section id="questionnaire-section" class="auth-card fade-up" style="display:none;">
-      <h2 class="auth-title">Therapist Compatibility Slideshow</h2>
-      <p class="auth-sub">Please answer these questions so we can assign a therapist or mentor compatible with you.</p>
+    <section id="student-questionnaire" class="auth-card fade-up" style="display:none; margin-top:20px;">
+      <h2 class="auth-title">Student Matching Questionnaire</h2>
+      <p class="auth-sub">Answer these questions to improve mentor/psychologist assignment quality.</p>
 
       <form id="prefs-form">
         <div id="slide-progress" class="slide-progress">Question 1 of 14</div>
-        <div class="slide-progress-wrap" aria-hidden="true">
-          <div id="slide-progress-bar" class="slide-progress-bar"></div>
-        </div>
+        <div class="slide-progress-wrap" aria-hidden="true"><div id="slide-progress-bar" class="slide-progress-bar"></div></div>
+
         <div class="slide-container">
-          <div class="question-slide active" data-slide="1">
-            <label class="form-label" for="q-gender">Gender</label>
-            <select id="q-gender" class="form-select" required>
-              <option value="">Select one</option>
-              <option>Female</option>
-              <option>Male</option>
-              <option>Non-binary</option>
-              <option>Prefer not to say</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="2">
-            <label class="form-label" for="q-age">Age</label>
-            <input id="q-age" class="form-input" type="number" min="16" max="99" required />
-          </div>
-
-          <div class="question-slide" data-slide="3">
-            <label class="form-label" for="q-status">Status</label>
-            <select id="q-status" class="form-select" required>
-              <option value="">Select one</option>
-              <option>Single</option>
-              <option>In a relationship</option>
-              <option>Married</option>
-              <option>Complicated</option>
-              <option>Prefer not to say</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="4">
-            <label class="form-label" for="q-religion-importance">How important is religion in your life?</label>
-            <p class="form-hint">We ask about religion so we can match you to a therapist who can empathize with your background.</p>
-            <select id="q-religion-importance" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="not">Not important</option>
-              <option value="somewhat">Somewhat important</option>
-              <option value="important">Important</option>
-              <option value="very">Very important</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="5">
-            <label class="form-label" for="q-religion">Which religion do you identify with?</label>
-            <input id="q-religion" class="form-input" type="text" placeholder="e.g. Christianity, Islam, Hinduism" required />
-          </div>
-
-          <div class="question-slide" data-slide="6">
-            <label class="form-label" for="q-christian-match">Would you like to be matched with a therapist who provides Christian-based therapy?</label>
-            <select id="q-christian-match" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-              <option value="open">Open to either</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="7">
-            <label class="form-label" for="q-spiritual">Do you consider yourself to be spiritual?</label>
-            <select id="q-spiritual" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-              <option value="somewhat">Somewhat</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="8">
-            <label class="form-label" for="q-therapy-before">Have you ever been in therapy before?</label>
-            <select id="q-therapy-before" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="9">
-            <label class="form-label" for="q-why-now">If yes or no, what led you to consider therapy today?</label>
-            <textarea id="q-why-now" class="form-textarea" required placeholder="Share what brought you here..."></textarea>
-          </div>
-
-          <div class="question-slide" data-slide="10">
-            <label class="form-label" for="q-expectations">What are your expectations from your therapist?</label>
-            <textarea id="q-expectations" class="form-textarea" required placeholder="What kind of support are you hoping for?"></textarea>
-          </div>
-
-          <div class="question-slide" data-slide="11">
-            <label class="form-label" for="q-tone">Would you prefer a therapist who is gentle or direct?</label>
-            <select id="q-tone" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="gentle">Gentle</option>
-              <option value="direct">Direct</option>
-              <option value="balanced">Balanced</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="12">
-            <label class="form-label" for="q-structure">Would you prefer a therapist who is flexible or structured?</label>
-            <select id="q-structure" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="flexible">Flexible</option>
-              <option value="structured">Structured</option>
-              <option value="balanced">Balanced</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="13">
-            <label class="form-label" for="q-style">Would you prefer a therapist who is casual or formal?</label>
-            <select id="q-style" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="casual">Casual</option>
-              <option value="formal">Formal</option>
-              <option value="balanced">Balanced</option>
-            </select>
-          </div>
-
-          <div class="question-slide" data-slide="14">
-            <label class="form-label" for="q-role">Do you prefer a mentor or a psychologist?</label>
-            <select id="q-role" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="Mentor">Mentor</option>
-              <option value="Psychologist">Psychologist</option>
-              <option value="Either">Either</option>
-            </select>
-          </div>
+          <div class="question-slide active" data-slide="1"><label class="form-label" for="q-gender">Gender</label><select id="q-gender" class="form-select" required><option value="">Select one</option><option>Female</option><option>Male</option><option>Non-binary</option><option>Prefer not to say</option></select></div>
+          <div class="question-slide" data-slide="2"><label class="form-label" for="q-age">Age</label><input id="q-age" class="form-input" type="number" min="16" max="99" required /></div>
+          <div class="question-slide" data-slide="3"><label class="form-label" for="q-status">Status</label><select id="q-status" class="form-select" required><option value="">Select one</option><option>Single</option><option>In a relationship</option><option>Married</option><option>Complicated</option><option>Prefer not to say</option></select></div>
+          <div class="question-slide" data-slide="4"><label class="form-label" for="q-religion-importance">How important is religion in your life?</label><select id="q-religion-importance" class="form-select" required><option value="">Select one</option><option value="not">Not important</option><option value="somewhat">Somewhat important</option><option value="important">Important</option><option value="very">Very important</option></select></div>
+          <div class="question-slide" data-slide="5"><label class="form-label" for="q-religion">Which religion do you identify with?</label><input id="q-religion" class="form-input" type="text" required /></div>
+          <div class="question-slide" data-slide="6"><label class="form-label" for="q-christian-match">Would you like to be matched with a therapist who provides Christian-based therapy?</label><select id="q-christian-match" class="form-select" required><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option><option value="open">Open to either</option></select></div>
+          <div class="question-slide" data-slide="7"><label class="form-label" for="q-spiritual">Do you consider yourself to be spiritual?</label><select id="q-spiritual" class="form-select" required><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option><option value="somewhat">Somewhat</option></select></div>
+          <div class="question-slide" data-slide="8"><label class="form-label" for="q-therapy-before">Have you ever been in therapy before?</label><select id="q-therapy-before" class="form-select" required><option value="">Select one</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="question-slide" data-slide="9"><label class="form-label" for="q-why-now">What led you to consider therapy today?</label><textarea id="q-why-now" class="form-textarea" required></textarea></div>
+          <div class="question-slide" data-slide="10"><label class="form-label" for="q-expectations">What are your expectations from your therapist?</label><textarea id="q-expectations" class="form-textarea" required></textarea></div>
+          <div class="question-slide" data-slide="11"><label class="form-label" for="q-tone">Would you prefer a therapist who is gentle or direct?</label><select id="q-tone" class="form-select" required><option value="">Select one</option><option value="gentle">Gentle</option><option value="direct">Direct</option><option value="balanced">Balanced</option></select></div>
+          <div class="question-slide" data-slide="12"><label class="form-label" for="q-structure">Would you prefer a therapist who is flexible or structured?</label><select id="q-structure" class="form-select" required><option value="">Select one</option><option value="flexible">Flexible</option><option value="structured">Structured</option><option value="balanced">Balanced</option></select></div>
+          <div class="question-slide" data-slide="13"><label class="form-label" for="q-style">Would you prefer a therapist who is casual or formal?</label><select id="q-style" class="form-select" required><option value="">Select one</option><option value="casual">Casual</option><option value="formal">Formal</option><option value="balanced">Balanced</option></select></div>
+          <div class="question-slide" data-slide="14"><label class="form-label" for="q-role">Do you prefer a mentor or a psychologist?</label><select id="q-role" class="form-select" required><option value="">Select one</option><option value="Mentor">Mentor</option><option value="Psychologist">Psychologist</option><option value="Either">Either</option></select></div>
         </div>
 
         <div class="slide-nav">
           <button id="prev-slide" type="button" class="btn-ghost-modal">Previous</button>
           <button id="next-slide" type="button" class="btn-primary">Next</button>
-          <button id="submit-slides" class="btn-primary" type="submit" style="display:none;">Get compatibility match</button>
+          <button id="submit-slides" class="btn-primary" type="submit" style="display:none;">Submit questionnaire</button>
         </div>
       </form>
 
-      <div id="match-result" class="result-card" style="display:none;"></div>
+      <div id="student-result" class="result-card" style="display:none;"></div>
+    </section>
+
+    <section id="pro-values-questionnaire" class="auth-card fade-up" style="display:none; margin-top:20px;">
+      <h2 class="auth-title">Mentor/Psychiatrist Values Profile</h2>
+      <p class="auth-sub">Complete this profile so the assignment engine can match you to suitable students.</p>
+      <form id="pro-values-form">
+        <div class="form-group">
+          <label class="form-label" for="pro-role">Role confirmation</label>
+          <select id="pro-role" class="form-select" required>
+            <option value="">Select role</option>
+            <option value="mentor">Mentor</option>
+            <option value="psychiatrist">Psychiatrist</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-specialty">Primary focus area</label>
+          <select id="pro-specialty" class="form-select" required>
+            <option value="">Select one</option>
+            <option value="anxiety">Anxiety and stress</option>
+            <option value="depression">Depression and low mood</option>
+            <option value="academic">Academic pressure</option>
+            <option value="relationships">Relationships and social issues</option>
+            <option value="general">General wellbeing</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-tone">Preferred communication tone</label>
+          <select id="pro-tone" class="form-select" required>
+            <option value="">Select one</option>
+            <option value="gentle">Gentle</option>
+            <option value="direct">Direct</option>
+            <option value="balanced">Balanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-structure">Session style</label>
+          <select id="pro-structure" class="form-select" required>
+            <option value="">Select one</option>
+            <option value="flexible">Flexible</option>
+            <option value="structured">Structured</option>
+            <option value="mixed">Mixed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-values">Values you prioritize in support</label>
+          <textarea id="pro-values" class="form-textarea" required placeholder="e.g. confidentiality, empathy, accountability, faith sensitivity"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-languages">Languages you support</label>
+          <input id="pro-languages" class="form-input" required type="text" placeholder="e.g. English, Kiswahili" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="pro-availability">Availability summary</label>
+          <textarea id="pro-availability" class="form-textarea" required placeholder="e.g. Weekdays 8am-4pm, Sat 9am-1pm"></textarea>
+        </div>
+        <button class="btn-primary" type="submit">Save values profile</button>
+      </form>
+      <div id="pro-result" class="result-card" style="display:none;"></div>
     </section>
   </main>
 
   <script>
-    const signupForm = document.getElementById('signup-form');
-    const prefsSection = document.getElementById('questionnaire-section');
-    const prefsForm = document.getElementById('prefs-form');
-    const result = document.getElementById('match-result');
-    let lastMatchResult = null;
+    document.body.setAttribute('data-mood', localStorage.getItem('tuliza_dashboard_mood') || 'calm');
 
-    signupForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      prefsSection.style.display = 'block';
-      prefsSection.scrollIntoView({ behavior: 'smooth' });
-    });
+    const tabLogin = document.getElementById('tab-login');
+    const tabSignup = document.getElementById('tab-signup');
+    const paneLogin = document.getElementById('pane-login');
+    const paneSignup = document.getElementById('pane-signup');
+
+    function activateTab(mode) {
+      const isLogin = mode === 'login';
+      tabLogin.classList.toggle('active', isLogin);
+      tabSignup.classList.toggle('active', !isLogin);
+      tabLogin.setAttribute('aria-selected', String(isLogin));
+      tabSignup.setAttribute('aria-selected', String(!isLogin));
+      paneLogin.style.display = isLogin ? '' : 'none';
+      paneSignup.style.display = isLogin ? 'none' : '';
+    }
+
+    tabLogin.addEventListener('click', () => activateTab('login'));
+    tabSignup.addEventListener('click', () => activateTab('signup'));
+
+    function getRoleRedirect(role) {
+      if (role === 'mentor') return 'mentor.html';
+      if (role === 'psychiatrist') return 'psychologist.html';
+      if (role === 'admin') return 'admin.html';
+      return 'tuliza-frontend.html';
+    }
 
     function getProfessionals() {
       return [
@@ -245,18 +282,54 @@
       ];
     }
 
-    function compatibilityScore(user, professional) {
-      let score = 35;
-      if (user.roleChoice === 'Either' || professional.role === user.roleChoice) score += 20;
-      if (user.tone === 'balanced' || professional.tone === user.tone) score += 15;
-      if (user.structure === 'balanced' || professional.structure === user.structure) score += 15;
-      if (user.style === 'balanced' || professional.style === user.style) score += 15;
-      if (user.christianMatch === 'open') score += 5;
-      if (user.christianMatch === 'yes' && professional.christianBased) score += 10;
-      if (user.christianMatch === 'no' && !professional.christianBased) score += 8;
-      if (user.spiritual !== 'no' && professional.spiritualFriendly) score += 5;
-      return Math.min(99, score);
+    function compatibilityScore(u, p) {
+      let s = 35;
+      if (u.roleChoice === 'Either' || p.role === u.roleChoice) s += 20;
+      if (u.tone === 'balanced' || p.tone === u.tone) s += 15;
+      if (u.structure === 'balanced' || p.structure === u.structure) s += 15;
+      if (u.style === 'balanced' || p.style === u.style) s += 15;
+      if (u.christianMatch === 'open') s += 5;
+      if (u.christianMatch === 'yes' && p.christianBased) s += 10;
+      if (u.christianMatch === 'no' && !p.christianBased) s += 8;
+      if (u.spiritual !== 'no' && p.spiritualFriendly) s += 5;
+      return Math.min(99, s);
     }
+
+    const loginForm = document.getElementById('login-form');
+    const signupForm = document.getElementById('signup-form');
+    const studentQuestionnaire = document.getElementById('student-questionnaire');
+    const proValuesQuestionnaire = document.getElementById('pro-values-questionnaire');
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const alias = document.getElementById('login-alias').value.trim();
+      const role = document.getElementById('login-role').value;
+      if (!alias || !role) return;
+      localStorage.setItem('tuliza_session_user', JSON.stringify({ alias, role, loginAt: new Date().toISOString() }));
+      window.location.href = getRoleRedirect(role);
+    });
+
+    signupForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const alias = document.getElementById('signup-alias').value.trim();
+      const role = document.getElementById('signup-role').value;
+      if (!alias || !role) return;
+      localStorage.setItem('tuliza_signup_user', JSON.stringify({ alias, role, createdAt: new Date().toISOString() }));
+
+      studentQuestionnaire.style.display = 'none';
+      proValuesQuestionnaire.style.display = 'none';
+
+      if (role === 'student') {
+        studentQuestionnaire.style.display = '';
+        studentQuestionnaire.scrollIntoView({ behavior: 'smooth' });
+      } else if (role === 'mentor' || role === 'psychiatrist') {
+        document.getElementById('pro-role').value = role;
+        proValuesQuestionnaire.style.display = '';
+        proValuesQuestionnaire.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        window.location.href = getRoleRedirect(role);
+      }
+    });
 
     const slides = Array.from(document.querySelectorAll('.question-slide'));
     const progress = document.getElementById('slide-progress');
@@ -264,120 +337,66 @@
     const prevBtn = document.getElementById('prev-slide');
     const nextBtn = document.getElementById('next-slide');
     const submitBtn = document.getElementById('submit-slides');
+    const prefsForm = document.getElementById('prefs-form');
+    const studentResult = document.getElementById('student-result');
     let currentSlide = 0;
 
     function buildChoiceCards() {
-      const slideSelects = document.querySelectorAll('.question-slide select');
-      slideSelects.forEach((select) => {
+      document.querySelectorAll('#student-questionnaire .question-slide select').forEach((select) => {
         select.classList.add('native-hidden-select');
         const group = document.createElement('div');
         group.className = 'choice-group';
-
-        Array.from(select.options)
-          .filter((option) => option.value !== '')
-          .forEach((option) => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'choice-btn';
-            btn.textContent = option.textContent;
-            btn.dataset.value = option.value;
-
-            btn.addEventListener('click', () => {
-              select.value = option.value;
-              updateChoiceSelection(select, group);
-              clearChoiceValidation(select, group);
-
-              if (validateCurrentSlide() && currentSlide < slides.length - 1) {
-                setTimeout(() => {
-                  currentSlide += 1;
-                  updateSlides();
-                }, 130);
-              }
-            });
-
-            group.appendChild(btn);
+        Array.from(select.options).filter((o) => o.value !== '').forEach((opt) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'choice-btn';
+          btn.textContent = opt.textContent;
+          btn.dataset.value = opt.value;
+          btn.addEventListener('click', () => {
+            select.value = opt.value;
+            updateChoiceSelection(select, group);
+            if (validateCurrentSlide() && currentSlide < slides.length - 1) {
+              setTimeout(() => {
+                currentSlide += 1;
+                updateSlides();
+              }, 120);
+            }
           });
-
+          group.appendChild(btn);
+        });
         select.insertAdjacentElement('afterend', group);
       });
     }
 
     function updateChoiceSelection(select, group) {
-      const buttons = group.querySelectorAll('.choice-btn');
-      buttons.forEach((btn) => {
-        btn.classList.toggle('active', btn.dataset.value === select.value);
-      });
-    }
-
-    function clearChoiceValidation(select, group) {
-      if (!group) return;
-      group.classList.remove('invalid');
-      const errorEl = group.nextElementSibling;
-      if (errorEl && errorEl.classList.contains('choice-error')) {
-        errorEl.remove();
-      }
-      select.setCustomValidity('');
-      select.removeAttribute('aria-invalid');
-      select.removeAttribute('aria-describedby');
-    }
-
-    function setChoiceValidation(select, group, message) {
-      if (!group) return;
-      clearChoiceValidation(select, group);
-      group.classList.add('invalid');
-
-      const errorEl = document.createElement('p');
-      errorEl.className = 'choice-error';
-      errorEl.id = `${select.id}-choice-error`;
-      errorEl.textContent = message;
-      group.insertAdjacentElement('afterend', errorEl);
-
-      select.setCustomValidity(message);
-      select.setAttribute('aria-invalid', 'true');
-      select.setAttribute('aria-describedby', errorEl.id);
+      group.querySelectorAll('.choice-btn').forEach((b) => b.classList.toggle('active', b.dataset.value === select.value));
     }
 
     function syncCurrentSlideChoice() {
       const select = slides[currentSlide].querySelector('select.native-hidden-select');
       const group = slides[currentSlide].querySelector('.choice-group');
-      if (select && group) {
-        updateChoiceSelection(select, group);
-      }
-    }
-
-    function updateSlides() {
-      slides.forEach((slide, idx) => {
-        slide.classList.toggle('active', idx === currentSlide);
-      });
-      progress.textContent = `Question ${currentSlide + 1} of ${slides.length}`;
-      progressBar.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
-      prevBtn.disabled = currentSlide === 0;
-      nextBtn.style.display = currentSlide === slides.length - 1 ? 'none' : 'inline-flex';
-      submitBtn.style.display = currentSlide === slides.length - 1 ? 'inline-flex' : 'none';
-      syncCurrentSlideChoice();
+      if (select && group) updateChoiceSelection(select, group);
     }
 
     function validateCurrentSlide() {
-      const requiredFields = slides[currentSlide].querySelectorAll('input[required], select[required], textarea[required]');
-      for (const field of requiredFields) {
-        if (field.matches('select.native-hidden-select')) {
-          const group = field.nextElementSibling;
-          if (!field.value) {
-            setChoiceValidation(field, group, 'Please choose an option to continue.');
-            group?.querySelector('.choice-btn')?.focus();
-            return false;
-          }
-
-          clearChoiceValidation(field, group);
-          continue;
-        }
-
+      const fields = slides[currentSlide].querySelectorAll('input[required], select[required], textarea[required]');
+      for (const field of fields) {
         if (!field.value || !field.checkValidity()) {
           field.reportValidity();
           return false;
         }
       }
       return true;
+    }
+
+    function updateSlides() {
+      slides.forEach((slide, i) => slide.classList.toggle('active', i === currentSlide));
+      progress.textContent = `Question ${currentSlide + 1} of ${slides.length}`;
+      progressBar.style.width = `${((currentSlide + 1) / slides.length) * 100}%`;
+      prevBtn.disabled = currentSlide === 0;
+      nextBtn.style.display = currentSlide === slides.length - 1 ? 'none' : 'inline-flex';
+      submitBtn.style.display = currentSlide === slides.length - 1 ? 'inline-flex' : 'none';
+      syncCurrentSlideChoice();
     }
 
     prevBtn.addEventListener('click', () => {
@@ -399,7 +418,7 @@
       e.preventDefault();
       if (!validateCurrentSlide()) return;
 
-      const userProfile = {
+      const u = {
         gender: document.getElementById('q-gender').value,
         age: Number(document.getElementById('q-age').value),
         status: document.getElementById('q-status').value,
@@ -417,38 +436,54 @@
       };
 
       const ranked = getProfessionals()
-        .filter((p) => userProfile.roleChoice === 'Either' || p.role === userProfile.roleChoice)
-        .map((p) => ({ ...p, score: compatibilityScore(userProfile, p) }))
+        .filter((p) => u.roleChoice === 'Either' || p.role === u.roleChoice)
+        .map((p) => ({ ...p, score: compatibilityScore(u, p) }))
         .sort((a, b) => b.score - a.score);
 
       const top = ranked[0];
-      const backup = ranked[1];
+      const backup = ranked[1] || null;
+      localStorage.setItem('tuliza_student_preferences', JSON.stringify({ ...u, topMatch: top, backupMatch: backup, createdAt: new Date().toISOString() }));
 
-      const prefs = {
-        ...userProfile,
-        topMatch: top,
-        backupMatch: backup || null,
+      studentResult.style.display = 'block';
+      studentResult.innerHTML = '<h3 style="margin-bottom:8px;color:var(--plum)">Recommended assignment</h3>'
+        + '<strong>Primary:</strong> ' + top.role + ' - ' + top.name + ' (' + top.score + '%)<br>'
+        + (backup ? '<strong>Alternative:</strong> ' + backup.name + ' (' + backup.score + '%)<br>' : '')
+        + '<br><em>Your preferences were saved. In backend integration, send this payload to your assignment API.</em>';
+
+      setTimeout(() => {
+        window.location.href = 'tuliza-frontend.html';
+      }, 1600);
+    });
+
+    const proValuesForm = document.getElementById('pro-values-form');
+    const proResult = document.getElementById('pro-result');
+
+    proValuesForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const payload = {
+        role: document.getElementById('pro-role').value,
+        specialty: document.getElementById('pro-specialty').value,
+        tone: document.getElementById('pro-tone').value,
+        structure: document.getElementById('pro-structure').value,
+        values: document.getElementById('pro-values').value.trim(),
+        languages: document.getElementById('pro-languages').value.trim(),
+        availability: document.getElementById('pro-availability').value.trim(),
         createdAt: new Date().toISOString()
       };
 
-      lastMatchResult = prefs;
-      localStorage.setItem('tuliza_user_preferences', JSON.stringify({
-        questionnaireCompleted: true,
-        createdAt: prefs.createdAt
-      }));
+      localStorage.setItem('tuliza_professional_profile', JSON.stringify(payload));
+      proResult.style.display = 'block';
+      proResult.innerHTML = '<h3 style="margin-bottom:8px;color:var(--plum)">Values profile saved</h3>'
+        + '<p>Profile captured for assignment logic. Connect this payload to your backend endpoint for database storage.</p>';
 
-      result.style.display = 'block';
-      result.innerHTML = '<strong>Recommended assignment:</strong> ' + top.role + ' - ' + top.name + ' (' + top.id + ')<br>'
-        + '<strong>Compatibility score:</strong> ' + top.score + '%<br>'
-        + (backup ? '<strong>Alternative match:</strong> ' + backup.name + ' (' + backup.score + '%)<br><br>' : '<br>')
-        + 'Therapist tone preference: ' + userProfile.tone + '<br>'
-        + 'Structure preference: ' + userProfile.structure + '<br>'
-        + 'Style preference: ' + userProfile.style + '<br><br>'
-        + 'This match reflects your background, religion/spirituality preferences, and therapist style compatibility.';
+      setTimeout(() => {
+        window.location.href = getRoleRedirect(payload.role);
+      }, 1400);
     });
 
     buildChoiceCards();
     updateSlides();
+    activateTab('login');
   </script>
 </body>
 </html>

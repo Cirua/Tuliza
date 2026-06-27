@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Mentor Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar" aria-label="Main navigation">
+    <a class="logo" href="tuliza-frontend.html">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
+    </a>
+    <div class="nav-tabs" role="navigation" aria-label="Role pages">
+      <a class="nav-tab" href="tuliza-frontend.html">Student</a>
+      <a class="nav-tab active" href="mentor.html" aria-current="page">Mentor</a>
+      <a class="nav-tab" href="psychologist.html">Psychologist</a>
+      <a class="nav-tab" href="admin.html">Admin</a>
+      <a class="nav-tab" href="account.html">Account</a>
+    </div>
+  </nav>
+
+  <main class="role-main fade-up">
+    <section class="role-hero">
+      <div>
+        <p class="role-eyebrow">Mentor workspace</p>
+        <h1>Support students in real time</h1>
+        <p class="subtitle">Track pending requests, run mentorship sessions, and keep follow-ups consistent.</p>
+      </div>
+      <div class="role-actions">
+        <button class="btn-primary" type="button">Start open session</button>
+        <button class="btn-ghost-modal" type="button">Export weekly log</button>
+      </div>
+    </section>
+
+    <section class="role-kpi-grid fade-up fade-up-delay-1" aria-label="Mentor metrics">
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Assigned students</p>
+        <p class="role-kpi-value">18</p>
+        <p class="role-kpi-meta">4 new this week</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Sessions today</p>
+        <p class="role-kpi-value">6</p>
+        <p class="role-kpi-meta">2 completed</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Unread check-ins</p>
+        <p class="role-kpi-value">9</p>
+        <p class="role-kpi-meta">2 flagged for follow-up</p>
+      </article>
+      <article class="role-kpi-card">
+        <p class="role-kpi-label">Response time</p>
+        <p class="role-kpi-value">12m</p>
+        <p class="role-kpi-meta">Target under 20m</p>
+      </article>
+    </section>
+
+    <section class="role-layout fade-up fade-up-delay-2">
+      <article class="role-panel">
+        <div class="role-panel-head">
+          <h2>Today&apos;s mentorship queue</h2>
+          <button class="btn-ghost-modal" type="button">View all</button>
+        </div>
+        <div class="role-table-wrap">
+          <table class="role-table" aria-label="Mentorship queue table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Concern</th>
+                <th>Slot</th>
+                <th>Priority</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Starling_92</td>
+                <td>Exam anxiety</td>
+                <td>10:30</td>
+                <td><span class="role-pill warning">Medium</span></td>
+                <td><button class="role-mini-btn">Open chat</button></td>
+              </tr>
+              <tr>
+                <td>BlueRiver_14</td>
+                <td>Social isolation</td>
+                <td>11:45</td>
+                <td><span class="role-pill">Low</span></td>
+                <td><button class="role-mini-btn">Open chat</button></td>
+              </tr>
+              <tr>
+                <td>CalmOrbit_33</td>
+                <td>Burnout signs</td>
+                <td>14:00</td>
+                <td><span class="role-pill high">High</span></td>
+                <td><button class="role-mini-btn">Escalate</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <aside class="role-stack">
+        <article class="role-panel">
+          <h3>Follow-up checklist</h3>
+          <ul class="role-list">
+            <li>Send coping plan to CalmOrbit_33</li>
+            <li>Confirm Friday group reflection room</li>
+            <li>Review low-engagement students</li>
+            <li>Share sleep routine resource pack</li>
+          </ul>
+        </article>
+        <article class="role-panel">
+          <h3>Quick notes</h3>
+          <textarea class="form-textarea" placeholder="Write session highlights and next steps..."></textarea>
+          <button class="btn-primary" type="button" style="margin-top:12px;">Save note</button>
+        </article>
+      </aside>
+    </section>
+  </main>
+
+  <script>
+    const storedMood = localStorage.getItem('tuliza_dashboard_mood') || 'calm';
+    document.body.setAttribute('data-mood', storedMood);
+  </script>
+</body>
+</html>
