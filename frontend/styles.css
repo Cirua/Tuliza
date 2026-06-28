@@ -1089,6 +1089,12 @@ a:hover { color: var(--coral-deep); }
   border-color: transparent;
   box-shadow: var(--shadow-primary);
 }
+.question-slide input[type="radio"]:focus-visible + label.form-label,
+.question-slide input[type="checkbox"]:focus-visible + label.form-label {
+  outline: 3px solid rgba(255, 122, 89, 0.45);
+  outline-offset: 2px;
+  border-color: var(--coral);
+}
 .question-slide .form-input,
 .question-slide .form-select,
 .question-slide .form-textarea {

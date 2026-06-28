@@ -42,7 +42,7 @@ function profilePath(role) {
   if (role === 'mentor') return 'profile-mentor.html'
   if (role === 'psychiatrist') return 'profile-psychiatrist.html'
   if (role === 'admin') return 'profile-admin.html'
-  return 'profile.html'
+  return 'account.html'
 }
 
 function isStrongPassword(password) {
@@ -210,12 +210,15 @@ async function ensureQuestionnaireWriteSchema(dbPool) {
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS assignments (
       assignment_id SERIAL PRIMARY KEY,
-      username VARCHAR(100) UNIQUE NOT NULL,
-      student_id INT REFERENCES student(student_id),
+      username VARCHAR(100),
+      student_id INT UNIQUE REFERENCES student(student_id),
       mentor_id INT REFERENCES mentor(mentor_id),
       psychiatrist_id INT REFERENCES psychiatrist(psychiatrist_id)
     )
   `)
+  await dbPool.query('DROP INDEX IF EXISTS idx_assignments_username_unique')
+  await dbPool.query('ALTER TABLE assignments DROP CONSTRAINT IF EXISTS assignments_username_key')
+  await dbPool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_assignments_student_unique ON assignments(student_id)')
 
   // Compatibility guard for older questionnaire schema variants.
   await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS mentalhealthsupport VARCHAR(10)')
@@ -272,11 +275,11 @@ async function ensureQuestionnaireWriteSchema(dbPool) {
   if (fkTarget.rows[0] && String(fkTarget.rows[0].referenced_table) !== 'student') {
     await dbPool.query('ALTER TABLE questionnaire DROP CONSTRAINT IF EXISTS fk_qst_student')
     await dbPool.query(
-      'ALTER TABLE questionnaire ADD CONSTRAINT fk_qst_student FOREIGN KEY (student_id) REFERENCES student(student_id)'
+      'ALTER TABLE questionnaire ADD CONSTRAINT fk_qst_student FOREIGN KEY (student_id) REFERENCES student(student_id) ON DELETE CASCADE'
     )
   } else if (!fkTarget.rows[0]) {
     await dbPool.query(
-      'ALTER TABLE questionnaire ADD CONSTRAINT fk_qst_student FOREIGN KEY (student_id) REFERENCES student(student_id)'
+      'ALTER TABLE questionnaire ADD CONSTRAINT fk_qst_student FOREIGN KEY (student_id) REFERENCES student(student_id) ON DELETE CASCADE'
     )
   }
 }
@@ -714,7 +717,6 @@ function setupAuthRoutes(app, dbPool) {
             mentor_id = EXCLUDED.mentor_id,
             psychiatrist_id = EXCLUDED.psychiatrist_id,
             answers_json = EXCLUDED.answers_json,
-            created_at = NOW(),
             updated_at = NOW()
           `,
           [...structuredValues, JSON.stringify(answers)]
@@ -760,8 +762,7 @@ function setupAuthRoutes(app, dbPool) {
             communication = EXCLUDED.communication,
             mentor_id = EXCLUDED.mentor_id,
             psychiatrist_id = EXCLUDED.psychiatrist_id,
-            answers_json = EXCLUDED.answers_json,
-            created_at = NOW()
+            answers_json = EXCLUDED.answers_json
           `,
           [...structuredValues, JSON.stringify(answers)]
         )
@@ -806,7 +807,6 @@ function setupAuthRoutes(app, dbPool) {
             communication = EXCLUDED.communication,
             mentor_id = EXCLUDED.mentor_id,
             psychiatrist_id = EXCLUDED.psychiatrist_id,
-            created_at = NOW(),
             updated_at = NOW()
           `,
           structuredValues
@@ -850,8 +850,7 @@ function setupAuthRoutes(app, dbPool) {
             session_structure = EXCLUDED.session_structure,
             communication = EXCLUDED.communication,
             mentor_id = EXCLUDED.mentor_id,
-            psychiatrist_id = EXCLUDED.psychiatrist_id,
-            created_at = NOW()
+            psychiatrist_id = EXCLUDED.psychiatrist_id
           `,
           structuredValues
         )
@@ -868,8 +867,9 @@ function setupAuthRoutes(app, dbPool) {
         `
         INSERT INTO assignments (username, student_id, mentor_id, psychiatrist_id)
         VALUES ($1, $2, $3, $4)
-        ON CONFLICT (username)
+        ON CONFLICT (student_id)
         DO UPDATE SET
+          username = EXCLUDED.username,
           student_id = EXCLUDED.student_id,
           mentor_id = EXCLUDED.mentor_id,
           psychiatrist_id = EXCLUDED.psychiatrist_id
@@ -877,7 +877,7 @@ function setupAuthRoutes(app, dbPool) {
         [studentResult.rows[0].username, resolvedStudentId, mentorId, psychiatristId]
       )
 
-      const assignedTo = assigneeRole === 'mentor' ? 'mentor' : assigneeRole === 'psychiatrist' ? 'psychiatrist' : 'pending'
+      const assignedTo = mentorId != null ? 'mentor' : psychiatristId != null ? 'psychiatrist' : null
 
       return res.json({
         ok: true,
@@ -888,7 +888,7 @@ function setupAuthRoutes(app, dbPool) {
       })
     } catch (err) {
       console.error('Questionnaire save failed:', err.message)
-      return res.status(500).json({ error: `Failed to save questionnaire: ${err.message}` })
+      return res.status(500).json({ error: 'Failed to save questionnaire.' })
     }
   })
 
@@ -948,29 +948,20 @@ function setupAuthRoutes(app, dbPool) {
         const safeQuestionnaire = String(questionnaire || '').trim() || null
         const safeModeOfPayment = String(modeOfPayment || '').trim() || null
 
-        await dbPool.query(
-          `
-          CREATE TABLE IF NOT EXISTS student (
-            student_id INT PRIMARY KEY,
-            full_name VARCHAR(100) NOT NULL,
-            email VARCHAR(100) UNIQUE NOT NULL,
-            username VARCHAR(100) UNIQUE NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            gender VARCHAR(20),
-            phone_no INT,
-            questionnaire VARCHAR(250),
-            mode_of_payment VARCHAR(50)
-          )
-          `
-        )
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS full_name VARCHAR(100)')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS gender VARCHAR(20)')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS phone_no INT')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS questionnaire VARCHAR(250)')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS mode_of_payment VARCHAR(50)')
 
-        await dbPool.query(
+        const studentUpsert = await dbPool.query(
           `
           INSERT INTO student (
-            student_id, full_name, email, username, password_hash, gender, phone_no, questionnaire, mode_of_payment
+            signup_id, full_name, email, username, password_hash, gender, phone_no, questionnaire, mode_of_payment
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          ON CONFLICT (student_id)
+          ON CONFLICT (signup_id)
           DO UPDATE SET
             full_name = EXCLUDED.full_name,
             email = EXCLUDED.email,
@@ -980,6 +971,7 @@ function setupAuthRoutes(app, dbPool) {
             phone_no = EXCLUDED.phone_no,
             questionnaire = EXCLUDED.questionnaire,
             mode_of_payment = EXCLUDED.mode_of_payment
+          RETURNING student_id
           `,
           [
             parsedSignupId,
@@ -994,7 +986,7 @@ function setupAuthRoutes(app, dbPool) {
           ]
         )
 
-        profileUserId = String(parsedSignupId)
+        profileUserId = String(studentUpsert.rows[0].student_id)
         await syncLegacyStudentTableIfPresent(dbPool, Number(profileUserId))
       } else if (normalizedRole === 'mentor' || normalizedRole === 'psychiatrist') {
         const safeFullName = String(fullName || '').trim() || buildDisplayName(email)
@@ -1003,37 +995,28 @@ function setupAuthRoutes(app, dbPool) {
         if (normalizedRole === 'mentor') {
           const safeBio = String(bio || '').trim() || null
 
-          await dbPool.query(
-            `
-            CREATE TABLE IF NOT EXISTS mentor (
-              mentor_id INT PRIMARY KEY,
-              full_name VARCHAR(100) NOT NULL,
-              email VARCHAR(100) UNIQUE NOT NULL,
-              password_hash VARCHAR(255) NOT NULL,
-              phone_no INT,
-              bio VARCHAR(100),
-              student_id INT,
-              CONSTRAINT fk_mentor_student FOREIGN KEY (student_id) REFERENCES student(student_id)
-            )
-            `
-          )
+          await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)')
+          await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS phone_no INT')
+          await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS bio VARCHAR(100)')
+          await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS student_id INT')
 
-          await dbPool.query(
+          const mentorUpsert = await dbPool.query(
             `
-            INSERT INTO mentor (mentor_id, full_name, email, password_hash, phone_no, bio, student_id)
+            INSERT INTO mentor (signup_id, full_name, email, password_hash, phone_no, bio, student_id)
             VALUES ($1, $2, $3, $4, $5, $6, NULL)
-            ON CONFLICT (mentor_id)
+            ON CONFLICT (signup_id)
             DO UPDATE SET
               full_name = EXCLUDED.full_name,
               email = EXCLUDED.email,
               password_hash = EXCLUDED.password_hash,
               phone_no = EXCLUDED.phone_no,
               bio = EXCLUDED.bio
+            RETURNING mentor_id
             `,
             [parsedSignupId, safeFullName, email, passwordHash, safePhoneNo, safeBio]
           )
 
-          profileUserId = String(parsedSignupId)
+          profileUserId = String(mentorUpsert.rows[0].mentor_id)
         } else {
           const safeCertification = String(certification || '').trim() || null
           const safeLicenceNumber = licenceNumber == null || String(licenceNumber).trim() === '' ? null : Number(licenceNumber)
@@ -1041,28 +1024,18 @@ function setupAuthRoutes(app, dbPool) {
             yearsOfExperience == null || String(yearsOfExperience).trim() === '' ? null : Number(yearsOfExperience)
           const safeBillingDetails = String(billingDetails || '').trim() || null
 
-          await dbPool.query(
-            `
-            CREATE TABLE IF NOT EXISTS psychiatrist (
-              psychiatrist_id INT PRIMARY KEY,
-              full_name VARCHAR(100) NOT NULL,
-              email VARCHAR(100) UNIQUE NOT NULL,
-              password_hash VARCHAR(255) NOT NULL,
-              phone_no INT,
-              certification VARCHAR(100),
-              licence_number INT,
-              years_of_experience INT,
-              billing_details VARCHAR(50),
-              student_id INT,
-              CONSTRAINT fk_psychiatrist_student FOREIGN KEY (student_id) REFERENCES student(student_id)
-            )
-            `
-          )
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS phone_no INT')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS certification VARCHAR(100)')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS licence_number INT')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS years_of_experience INT')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS billing_details VARCHAR(50)')
+          await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS student_id INT')
 
-          await dbPool.query(
+          const psychiatristUpsert = await dbPool.query(
             `
             INSERT INTO psychiatrist (
-              psychiatrist_id,
+              signup_id,
               full_name,
               email,
               password_hash,
@@ -1074,7 +1047,7 @@ function setupAuthRoutes(app, dbPool) {
               student_id
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NULL)
-            ON CONFLICT (psychiatrist_id)
+            ON CONFLICT (signup_id)
             DO UPDATE SET
               full_name = EXCLUDED.full_name,
               email = EXCLUDED.email,
@@ -1084,6 +1057,7 @@ function setupAuthRoutes(app, dbPool) {
               licence_number = EXCLUDED.licence_number,
               years_of_experience = EXCLUDED.years_of_experience,
               billing_details = EXCLUDED.billing_details
+            RETURNING psychiatrist_id
             `,
             [
               parsedSignupId,
@@ -1098,7 +1072,7 @@ function setupAuthRoutes(app, dbPool) {
             ]
           )
 
-          profileUserId = String(parsedSignupId)
+          profileUserId = String(psychiatristUpsert.rows[0].psychiatrist_id)
         }
       } else if (normalizedRole === 'admin') {
         const safeContactId = contactId == null || String(contactId).trim() === '' ? null : Number(contactId)
@@ -1292,7 +1266,12 @@ function setupAuthRoutes(app, dbPool) {
 
         const mentorProfile = await dbPool.query(
           `
-          SELECT to_jsonb(m) AS profile
+          SELECT
+            m.mentor_id,
+            m.full_name,
+            m.email,
+            m.phone_no,
+            m.bio
           FROM ${mentorTable} m
           WHERE m.mentor_id = $1
           LIMIT 1
@@ -1309,7 +1288,7 @@ function setupAuthRoutes(app, dbPool) {
           assigned: true,
           assignedRole: 'mentor',
           assignedId: Number(row.mentor_id),
-          profile: mentorProfile.rows[0].profile || {},
+          profile: mentorProfile.rows[0] || {},
         })
       }
 
@@ -1324,7 +1303,15 @@ function setupAuthRoutes(app, dbPool) {
 
       const psychiatristProfile = await dbPool.query(
         `
-        SELECT to_jsonb(p) AS profile
+        SELECT
+          p.psychiatrist_id,
+          p.full_name,
+          p.email,
+          p.phone_no,
+          p.certification,
+          p.licence_number,
+          p.years_of_experience,
+          p.billing_details
         FROM ${psychiatristTable} p
         WHERE p.psychiatrist_id = $1
         LIMIT 1
@@ -1341,7 +1328,7 @@ function setupAuthRoutes(app, dbPool) {
         assigned: true,
         assignedRole: 'psychiatrist',
         assignedId: Number(row.psychiatrist_id),
-        profile: psychiatristProfile.rows[0].profile || {},
+        profile: psychiatristProfile.rows[0] || {},
       })
     } catch (err) {
       console.error('Failed to load student assigned support:', err.message)

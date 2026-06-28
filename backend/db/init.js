@@ -69,6 +69,7 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS signup_id INT')
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS username VARCHAR(100)')
+  await dbPool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_student_signup_unique ON student(signup_id)')
 
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS mentor (
@@ -84,6 +85,7 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS signup_id INT')
   await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
   await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
+  await dbPool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_mentor_signup_unique ON mentor(signup_id)')
 
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS psychiatrist (
@@ -99,6 +101,7 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS signup_id INT')
   await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
   await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
+  await dbPool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_psychiatrist_signup_unique ON psychiatrist(signup_id)')
 
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS questionnaire (
@@ -142,53 +145,113 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
 
   await dbPool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'questionnaire' AND column_name = 'signup_id'
+      ) THEN
+        UPDATE questionnaire q
+        SET student_id = s.student_id
+        FROM student s
+        WHERE q.student_id IS NULL
+          AND s.signup_id = q.signup_id;
+      END IF;
+
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.tables
+        WHERE table_schema = 'public' AND table_name = 'assignments'
+      ) THEN
+        UPDATE questionnaire q
+        SET student_id = a.student_id
+        FROM assignments a
+        WHERE q.student_id IS NULL
+          AND a.student_id IS NOT NULL
+          AND (
+            (q.mentor_id IS NOT NULL AND a.mentor_id = q.mentor_id)
+            OR (q.psychiatrist_id IS NOT NULL AND a.psychiatrist_id = q.psychiatrist_id)
+          );
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (SELECT 1 FROM questionnaire WHERE student_id IS NULL) THEN
+        ALTER TABLE questionnaire ALTER COLUMN student_id SET NOT NULL;
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query(`
     CREATE UNIQUE INDEX IF NOT EXISTS idx_questionnaire_student_unique ON questionnaire(student_id)
   `)
 
   await dbPool.query(`
     DO $$
+    DECLARE
+      qst_student_target TEXT;
+      qst_mentor_target TEXT;
+      qst_psy_target TEXT;
     BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE table_schema = 'public'
-          AND table_name = 'questionnaire'
-          AND constraint_name = 'fk_qst_student'
-      ) THEN
+      SELECT ccu.table_name
+      INTO qst_student_target
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.constraint_column_usage ccu
+        ON tc.constraint_name = ccu.constraint_name
+       AND tc.table_schema = ccu.table_schema
+      WHERE tc.table_schema = 'public'
+        AND tc.table_name = 'questionnaire'
+        AND tc.constraint_name = 'fk_qst_student'
+        AND tc.constraint_type = 'FOREIGN KEY'
+      LIMIT 1;
+
+      IF qst_student_target IS DISTINCT FROM 'student' THEN
+        ALTER TABLE questionnaire DROP CONSTRAINT IF EXISTS fk_qst_student;
         ALTER TABLE questionnaire
           ADD CONSTRAINT fk_qst_student
-          FOREIGN KEY (student_id) REFERENCES student(student_id);
+          FOREIGN KEY (student_id) REFERENCES student(student_id) ON DELETE CASCADE;
       END IF;
-    END $$;
-  `)
 
-  await dbPool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE table_schema = 'public'
-          AND table_name = 'questionnaire'
-          AND constraint_name = 'fk_qst_mentor'
-      ) THEN
+      SELECT ccu.table_name
+      INTO qst_mentor_target
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.constraint_column_usage ccu
+        ON tc.constraint_name = ccu.constraint_name
+       AND tc.table_schema = ccu.table_schema
+      WHERE tc.table_schema = 'public'
+        AND tc.table_name = 'questionnaire'
+        AND tc.constraint_name = 'fk_qst_mentor'
+        AND tc.constraint_type = 'FOREIGN KEY'
+      LIMIT 1;
+
+      IF qst_mentor_target IS DISTINCT FROM 'mentor' THEN
+        ALTER TABLE questionnaire DROP CONSTRAINT IF EXISTS fk_qst_mentor;
         ALTER TABLE questionnaire
           ADD CONSTRAINT fk_qst_mentor
-          FOREIGN KEY (mentor_id) REFERENCES mentor(mentor_id);
+          FOREIGN KEY (mentor_id) REFERENCES mentor(mentor_id) ON DELETE CASCADE;
       END IF;
-    END $$;
-  `)
 
-  await dbPool.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.table_constraints
-        WHERE table_schema = 'public'
-          AND table_name = 'questionnaire'
-          AND constraint_name = 'fk_qst_psychiatrist'
-      ) THEN
+      SELECT ccu.table_name
+      INTO qst_psy_target
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.constraint_column_usage ccu
+        ON tc.constraint_name = ccu.constraint_name
+       AND tc.table_schema = ccu.table_schema
+      WHERE tc.table_schema = 'public'
+        AND tc.table_name = 'questionnaire'
+        AND tc.constraint_name = 'fk_qst_psychiatrist'
+        AND tc.constraint_type = 'FOREIGN KEY'
+      LIMIT 1;
+
+      IF qst_psy_target IS DISTINCT FROM 'psychiatrist' THEN
+        ALTER TABLE questionnaire DROP CONSTRAINT IF EXISTS fk_qst_psychiatrist;
         ALTER TABLE questionnaire
           ADD CONSTRAINT fk_qst_psychiatrist
-          FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrist(psychiatrist_id);
+          FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrist(psychiatrist_id) ON DELETE CASCADE;
       END IF;
     END $$;
   `)
@@ -196,8 +259,8 @@ async function initializeDatabase(dbPool) {
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS assignments (
       assignment_id SERIAL PRIMARY KEY,
-      username VARCHAR(100) UNIQUE NOT NULL,
-      student_id INT REFERENCES student(student_id),
+      username VARCHAR(100),
+      student_id INT UNIQUE REFERENCES student(student_id),
       mentor_id INT REFERENCES mentor(mentor_id),
       psychiatrist_id INT REFERENCES psychiatrist(psychiatrist_id)
     )
@@ -209,8 +272,10 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS mentor_id INT')
   await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
 
+  await dbPool.query('DROP INDEX IF EXISTS idx_assignments_username_unique')
+  await dbPool.query('ALTER TABLE assignments DROP CONSTRAINT IF EXISTS assignments_username_key')
   await dbPool.query(`
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_assignments_username_unique ON assignments(username)
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_assignments_student_unique ON assignments(student_id)
   `)
 
   await dbPool.query(`
@@ -231,6 +296,15 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS student_id INT')
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS mentor_id INT')
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
+
+  await dbPool.query('ALTER TABLE messages DROP CONSTRAINT IF EXISTS fk_msg_student')
+  await dbPool.query('ALTER TABLE messages DROP CONSTRAINT IF EXISTS fk_msg_mentor')
+  await dbPool.query('ALTER TABLE messages DROP CONSTRAINT IF EXISTS fk_msg_psychiatrist')
+  await dbPool.query('ALTER TABLE messages ADD CONSTRAINT fk_msg_student FOREIGN KEY (student_id) REFERENCES student(student_id)')
+  await dbPool.query('ALTER TABLE messages ADD CONSTRAINT fk_msg_mentor FOREIGN KEY (mentor_id) REFERENCES mentor(mentor_id)')
+  await dbPool.query(
+    'ALTER TABLE messages ADD CONSTRAINT fk_msg_psychiatrist FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrist(psychiatrist_id)'
+  )
 
   await dbPool.query(`
     DO $$

@@ -333,7 +333,12 @@
       const extra1El = document.getElementById('assigned-support-extra-1');
       const extra2El = document.getElementById('assigned-support-extra-2');
 
-      const sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      let sessionUser = {};
+      try {
+        sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      } catch (_) {
+        sessionUser = {};
+      }
       const role = String(sessionUser.role || '').toLowerCase();
       const studentId = Number(sessionUser.userId || sessionUser.signupId);
 
@@ -378,7 +383,9 @@
         } else {
           extra1El.textContent = profile.phone_no ? 'Phone: ' + profile.phone_no : '';
           const certification = profile.certification || '';
-          const years = Number.isFinite(Number(profile.years_of_experience)) ? String(profile.years_of_experience) : '';
+          const rawYears = profile.years_of_experience;
+          const hasYears = rawYears !== null && rawYears !== undefined && String(rawYears).trim() !== '';
+          const years = hasYears ? String(rawYears).trim() : '';
           const parts = [];
           if (certification) parts.push(certification);
           if (years) parts.push(years + ' years experience');

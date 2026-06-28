@@ -16,12 +16,16 @@
     if (!sessionUser || sessionUser.role !== 'mentor' || !sessionUser.signupId) window.location.href = 'account.html';
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const payload = { role: 'mentor', signupId: sessionUser.signupId, fullName: document.getElementById('fullName').value.trim(), phoneNo: document.getElementById('phoneNo').value.trim(), bio: document.getElementById('bio').value.trim() };
-      const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { msg.textContent = data.error || 'Failed to save profile'; return; }
-      sessionStorage.setItem('tuliza_session_user', JSON.stringify({ ...sessionUser, userId: data.userId, role: data.role, signupId: data.signupId }));
-      window.location.href = data.redirectTo || 'mentor.html';
+      try {
+        const payload = { role: 'mentor', signupId: sessionUser.signupId, fullName: document.getElementById('fullName').value.trim(), phoneNo: document.getElementById('phoneNo').value.trim(), bio: document.getElementById('bio').value.trim() };
+        const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) { msg.textContent = data.error || 'Failed to save profile'; return; }
+        sessionStorage.setItem('tuliza_session_user', JSON.stringify({ ...sessionUser, userId: data.userId, role: data.role, signupId: data.signupId }));
+        window.location.href = data.redirectTo || 'mentor.html';
+      } catch (_) {
+        msg.textContent = 'Could not reach server.';
+      }
     });
   </script>
 </body>

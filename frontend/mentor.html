@@ -188,7 +188,8 @@
 
         if (!response.ok) {
           clearSummary();
-          renderMessage(safeText(payload.error) || 'Failed to load assigned students.');
+          const backendError = safeText(payload.error);
+          renderMessage(backendError || 'Failed to load assigned students.');
           return;
         }
 
