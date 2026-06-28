@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuliza - Student Profile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="auth-main fade-up">
+    <section class="auth-hero-card fade-up">
+      <span class="match-eyebrow">Student profile</span>
+      <h1>Complete your student profile</h1>
+    </section>
+    <section class="auth-card" style="margin-top:20px;">
+      <form id="profile-form">
+        <div class="form-group"><label class="form-label" for="fullName">Full name</label><input id="fullName" class="form-input" required /></div>
+        <div class="form-group"><label class="form-label" for="username">Username</label><input id="username" class="form-input" required /></div>
+        <div class="form-group"><label class="form-label" for="gender">Gender</label><input id="gender" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" for="phoneNo">Phone number</label><input id="phoneNo" class="form-input" type="number" /></div>
+        <div class="form-group"><label class="form-label" for="questionnaire">Questionnaire note</label><input id="questionnaire" class="form-input" /></div>
+        <div class="form-group"><label class="form-label" for="modeOfPayment">Mode of payment</label><input id="modeOfPayment" class="form-input" /></div>
+        <p id="msg" class="role-help-text"></p>
+        <button class="btn-primary" type="submit">Save profile</button>
+      </form>
+    </section>
+  </main>
+  <script>
+    const form = document.getElementById('profile-form');
+    const msg = document.getElementById('msg');
+    const sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+    if (!sessionUser || sessionUser.role !== 'student' || !sessionUser.signupId) window.location.href = 'account.html';
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+      const payload = {
+        role: 'student',
+        signupId: sessionUser.signupId,
+        fullName: document.getElementById('fullName').value.trim(),
+        username: document.getElementById('username').value.trim(),
+        gender: document.getElementById('gender').value.trim(),
+        phoneNo: document.getElementById('phoneNo').value.trim(),
+        questionnaire: document.getElementById('questionnaire').value.trim(),
+        modeOfPayment: document.getElementById('modeOfPayment').value.trim(),
+      };
+      const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        msg.textContent = data.error || 'Failed to save profile';
+        return;
+      }
+      sessionStorage.setItem('tuliza_session_user', JSON.stringify({ ...sessionUser, userId: data.userId, role: data.role, signupId: data.signupId }));
+      window.location.href = data.redirectTo || 'questionnaire.html';
+    });
+  </script>
+</body>
+</html>

@@ -43,9 +43,9 @@ function sanitizeRole(role) {
 }
 
 function roleToTable(role) {
-  if (role === 'student') return 'students'
-  if (role === 'mentor') return 'mentors'
-  if (role === 'psychiatrist') return 'psychiatrists'
+  if (role === 'student') return 'student'
+  if (role === 'mentor') return 'mentor'
+  if (role === 'psychiatrist') return 'psychiatrist'
   if (role === 'admin') return 'admins'
   return null
 }

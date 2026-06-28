@@ -26,7 +26,6 @@ async function initializeDatabase(dbPool) {
 
   await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS signup_id SERIAL')
   await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
-  await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS role VARCHAR(30)')
   await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS role_id INT')
   await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS role_name VARCHAR(30)')
   await dbPool.query('ALTER TABLE signup ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)')
@@ -57,7 +56,7 @@ async function initializeDatabase(dbPool) {
   `)
 
   await dbPool.query(`
-    CREATE TABLE IF NOT EXISTS students (
+    CREATE TABLE IF NOT EXISTS student (
       student_id SERIAL PRIMARY KEY,
       signup_id INT UNIQUE NOT NULL REFERENCES signup(signup_id) ON DELETE CASCADE,
       email VARCHAR(150) UNIQUE NOT NULL,
@@ -66,13 +65,13 @@ async function initializeDatabase(dbPool) {
     )
   `)
 
-  await dbPool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS student_id SERIAL')
-  await dbPool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS signup_id INT')
-  await dbPool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
-  await dbPool.query('ALTER TABLE students ADD COLUMN IF NOT EXISTS username VARCHAR(100)')
+  await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS student_id SERIAL')
+  await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS signup_id INT')
+  await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
+  await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS username VARCHAR(100)')
 
   await dbPool.query(`
-    CREATE TABLE IF NOT EXISTS mentors (
+    CREATE TABLE IF NOT EXISTS mentor (
       mentor_id SERIAL PRIMARY KEY,
       signup_id INT UNIQUE NOT NULL REFERENCES signup(signup_id) ON DELETE CASCADE,
       email VARCHAR(150) UNIQUE NOT NULL,
@@ -81,13 +80,13 @@ async function initializeDatabase(dbPool) {
     )
   `)
 
-  await dbPool.query('ALTER TABLE mentors ADD COLUMN IF NOT EXISTS mentor_id SERIAL')
-  await dbPool.query('ALTER TABLE mentors ADD COLUMN IF NOT EXISTS signup_id INT')
-  await dbPool.query('ALTER TABLE mentors ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
-  await dbPool.query('ALTER TABLE mentors ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
+  await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS mentor_id SERIAL')
+  await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS signup_id INT')
+  await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
+  await dbPool.query('ALTER TABLE mentor ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
 
   await dbPool.query(`
-    CREATE TABLE IF NOT EXISTS psychiatrists (
+    CREATE TABLE IF NOT EXISTS psychiatrist (
       psychiatrist_id SERIAL PRIMARY KEY,
       signup_id INT UNIQUE NOT NULL REFERENCES signup(signup_id) ON DELETE CASCADE,
       email VARCHAR(150) UNIQUE NOT NULL,
@@ -96,19 +95,122 @@ async function initializeDatabase(dbPool) {
     )
   `)
 
-  await dbPool.query('ALTER TABLE psychiatrists ADD COLUMN IF NOT EXISTS psychiatrist_id SERIAL')
-  await dbPool.query('ALTER TABLE psychiatrists ADD COLUMN IF NOT EXISTS signup_id INT')
-  await dbPool.query('ALTER TABLE psychiatrists ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
-  await dbPool.query('ALTER TABLE psychiatrists ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
+  await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS psychiatrist_id SERIAL')
+  await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS signup_id INT')
+  await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
+  await dbPool.query('ALTER TABLE psychiatrist ADD COLUMN IF NOT EXISTS full_name VARCHAR(120)')
 
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS questionnaire (
       questionnaire_id SERIAL PRIMARY KEY,
-      student_id INT UNIQUE NOT NULL REFERENCES students(student_id) ON DELETE CASCADE,
-      answers_json JSONB NOT NULL,
+      mentalhealthsupport VARCHAR(10) NOT NULL,
+      concerns VARCHAR(200) NOT NULL,
+      period_affected VARCHAR(50) NOT NULL,
+      support_type VARCHAR(50) NOT NULL,
+      support_preferences VARCHAR(50) NOT NULL,
+      religion TEXT NOT NULL,
+      religion_type VARCHAR(50) NOT NULL,
+      spiritual_status VARCHAR(50) NOT NULL,
+      therapy_status VARCHAR(10) NOT NULL,
+      seek_support TEXT NOT NULL,
+      expectations TEXT NOT NULL,
+      session_structure VARCHAR(50) NOT NULL,
+      communication VARCHAR(50),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      student_id INT UNIQUE NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+      mentor_id INT REFERENCES mentor(mentor_id),
+      psychiatrist_id INT REFERENCES psychiatrist(psychiatrist_id)
     )
+  `)
+
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS mentalhealthsupport VARCHAR(10)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS concerns VARCHAR(200)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS period_affected VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS support_type VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS support_preferences VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS religion TEXT')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS religion_type VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS spiritual_status VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS therapy_status VARCHAR(10)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS seek_support TEXT')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS expectations TEXT')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS session_structure VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS communication VARCHAR(50)')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS student_id INT')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS mentor_id INT')
+  await dbPool.query('ALTER TABLE questionnaire ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
+
+  await dbPool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_questionnaire_student_unique ON questionnaire(student_id)
+  `)
+
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'questionnaire'
+          AND constraint_name = 'fk_qst_student'
+      ) THEN
+        ALTER TABLE questionnaire
+          ADD CONSTRAINT fk_qst_student
+          FOREIGN KEY (student_id) REFERENCES student(student_id);
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'questionnaire'
+          AND constraint_name = 'fk_qst_mentor'
+      ) THEN
+        ALTER TABLE questionnaire
+          ADD CONSTRAINT fk_qst_mentor
+          FOREIGN KEY (mentor_id) REFERENCES mentor(mentor_id);
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints
+        WHERE table_schema = 'public'
+          AND table_name = 'questionnaire'
+          AND constraint_name = 'fk_qst_psychiatrist'
+      ) THEN
+        ALTER TABLE questionnaire
+          ADD CONSTRAINT fk_qst_psychiatrist
+          FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrist(psychiatrist_id);
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS assignments (
+      assignment_id SERIAL PRIMARY KEY,
+      username VARCHAR(100) UNIQUE NOT NULL,
+      student_id INT REFERENCES student(student_id),
+      mentor_id INT REFERENCES mentor(mentor_id),
+      psychiatrist_id INT REFERENCES psychiatrist(psychiatrist_id)
+    )
+  `)
+
+  await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS assignment_id SERIAL')
+  await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS username VARCHAR(100)')
+  await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS student_id INT')
+  await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS mentor_id INT')
+  await dbPool.query('ALTER TABLE assignments ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
+
+  await dbPool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_assignments_username_unique ON assignments(username)
   `)
 
   await dbPool.query(`
@@ -120,9 +222,9 @@ async function initializeDatabase(dbPool) {
       student_id INT,
       mentor_id INT,
       psychiatrist_id INT,
-      CONSTRAINT fk_msg_student FOREIGN KEY (student_id) REFERENCES students(student_id),
-      CONSTRAINT fk_msg_mentor FOREIGN KEY (mentor_id) REFERENCES mentors(mentor_id),
-      CONSTRAINT fk_msg_psychiatrist FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrists(psychiatrist_id)
+      CONSTRAINT fk_msg_student FOREIGN KEY (student_id) REFERENCES student(student_id),
+      CONSTRAINT fk_msg_mentor FOREIGN KEY (mentor_id) REFERENCES mentor(mentor_id),
+      CONSTRAINT fk_msg_psychiatrist FOREIGN KEY (psychiatrist_id) REFERENCES psychiatrist(psychiatrist_id)
     )
   `)
 

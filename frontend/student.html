@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/frontend/styles.css" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 
 <body>
@@ -215,6 +215,18 @@
             </p>
             <a class="btn-outline-accent" href="journal.html">Open journal -&gt;</a>
           </div>
+
+          <div class="info-card" id="assigned-support-card" aria-live="polite">
+            <div class="info-card-header">
+              <div class="info-card-icon" style="background:#EAFBF2;" aria-hidden="true">A</div>
+              <h4 id="assigned-support-title">Assigned support</h4>
+            </div>
+            <p class="journal-meta" id="assigned-support-status">Loading your assigned support profile...</p>
+            <p class="journal-meta" id="assigned-support-name"></p>
+            <p class="journal-meta" id="assigned-support-email"></p>
+            <p class="journal-meta" id="assigned-support-extra-1"></p>
+            <p class="journal-meta" id="assigned-support-extra-2"></p>
+          </div>
         </div>
 
       </main>
@@ -311,6 +323,74 @@
       </div>
     </div>
   </div>
+
+  <script>
+    async function loadAssignedSupportProfile() {
+      const statusEl = document.getElementById('assigned-support-status');
+      const titleEl = document.getElementById('assigned-support-title');
+      const nameEl = document.getElementById('assigned-support-name');
+      const emailEl = document.getElementById('assigned-support-email');
+      const extra1El = document.getElementById('assigned-support-extra-1');
+      const extra2El = document.getElementById('assigned-support-extra-2');
+
+      const sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      const role = String(sessionUser.role || '').toLowerCase();
+      const studentId = Number(sessionUser.userId || sessionUser.signupId);
+
+      if (role !== 'student' || !Number.isInteger(studentId) || studentId <= 0) {
+        statusEl.textContent = 'Login as a student to view assigned support details.';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/student/assigned-support?studentId=' + encodeURIComponent(String(studentId)));
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          statusEl.textContent = payload.error || 'Failed to load assigned support profile.';
+          return;
+        }
+
+        if (!payload.assigned) {
+          titleEl.textContent = 'Assigned support';
+          statusEl.textContent = 'You have not been assigned a mentor or psychiatrist yet.';
+          nameEl.textContent = '';
+          emailEl.textContent = '';
+          extra1El.textContent = '';
+          extra2El.textContent = '';
+          return;
+        }
+
+        const profile = payload.profile || {};
+        const isMentor = payload.assignedRole === 'mentor';
+        titleEl.textContent = isMentor ? 'Assigned mentor' : 'Assigned psychiatrist';
+        statusEl.textContent = 'Here are your assigned support details.';
+
+        const fullName = profile.full_name || profile.username || 'Not provided';
+        const email = profile.email || 'Not provided';
+
+        nameEl.textContent = 'Name: ' + fullName;
+        emailEl.textContent = 'Email: ' + email;
+
+        if (isMentor) {
+          extra1El.textContent = profile.phone_no ? 'Phone: ' + profile.phone_no : '';
+          extra2El.textContent = profile.bio ? 'Bio: ' + profile.bio : '';
+        } else {
+          extra1El.textContent = profile.phone_no ? 'Phone: ' + profile.phone_no : '';
+          const certification = profile.certification || '';
+          const years = Number.isFinite(Number(profile.years_of_experience)) ? String(profile.years_of_experience) : '';
+          const parts = [];
+          if (certification) parts.push(certification);
+          if (years) parts.push(years + ' years experience');
+          extra2El.textContent = parts.length ? 'Qualifications: ' + parts.join(' | ') : '';
+        }
+      } catch (_) {
+        statusEl.textContent = 'Failed to load assigned support profile.';
+      }
+    }
+
+    loadAssignedSupportProfile();
+  </script>
 
 </body>
 </html>

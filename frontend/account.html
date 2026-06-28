@@ -169,8 +169,8 @@
 
         sessionStorage.setItem('tuliza_session_user', JSON.stringify({
           email,
-          role,
-          userId: payload.userId,
+          role: payload.role || role,
+          userId: payload.userId || null,
           signupId: payload.signupId,
         }));
 
