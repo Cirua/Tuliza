@@ -69,7 +69,7 @@ function setupWebSocket(server, { isAllowedOrigin }) {
         const hasStaticToken = Boolean(expectedToken)
         const hasSessionSecret = Boolean(process.env.TULIZA_SESSION_SECRET)
         let sessionClaims = null
-        if (hasStaticToken || hasSessionSecret) {
+        if (hasStaticToken || (hasSessionSecret && authToken)) {
           const staticTokenOk = hasStaticToken && authToken === expectedToken
           if (!staticTokenOk) {
             sessionClaims = verifySessionToken(authToken)
@@ -86,6 +86,7 @@ function setupWebSocket(server, { isAllowedOrigin }) {
           context = await resolveParticipantContext(String(userId), roleHint, peerUserId, peerRole)
         } catch (err) {
           console.error('Failed to resolve chat context:', err.message)
+          sendWsError(ws, `Failed to resolve user context: ${err.message}`)
           ws.close(1011, 'Failed to resolve user context')
           return
         }
@@ -96,9 +97,31 @@ function setupWebSocket(server, { isAllowedOrigin }) {
         }
 
         if (sessionClaims) {
-          if (String(sessionClaims.userId) !== String(context.userId) || String(sessionClaims.role) !== String(context.role)) {
-            ws.close(1008, 'Unauthorized identity')
-            return
+          const directMatch =
+            String(sessionClaims.userId) === String(context.userId) && String(sessionClaims.role) === String(context.role)
+
+          if (!directMatch) {
+            let claimContext = null
+            try {
+              claimContext = await resolveParticipantContext(
+                String(sessionClaims.userId),
+                String(sessionClaims.role),
+                peerUserId,
+                peerRole
+              )
+            } catch (_) {
+              claimContext = null
+            }
+
+            const compatibleIdentity =
+              claimContext &&
+              String(claimContext.userId) === String(context.userId) &&
+              String(claimContext.role) === String(context.role)
+
+            if (!compatibleIdentity) {
+              ws.close(1008, 'Unauthorized identity')
+              return
+            }
           }
         }
 
@@ -118,6 +141,7 @@ function setupWebSocket(server, { isAllowedOrigin }) {
             role: context.role,
             peerUserId: context.peerUserId,
             peerRole: context.peerRole,
+            peerDisplayName: context.peerDisplayName,
           })
         )
 
@@ -160,10 +184,13 @@ function setupWebSocket(server, { isAllowedOrigin }) {
         type: 'message',
         messageId: String(stored.message_id),
         sender: String(sender),
+        senderName: String(ws.userContext.displayName || sender),
         text: String(text),
         timestamp: toIsoString(stored.sent_at),
-        fromRole: roleLabel(ws.userContext.role),
-        toRole: roleLabel(ws.userContext.peerRole),
+        fromRole: ws.userContext.role,
+        toRole: ws.userContext.peerRole,
+        fromRoleLabel: roleLabel(ws.userContext.role),
+        toRoleLabel: roleLabel(ws.userContext.peerRole),
         toUserId: String(ws.userContext.peerUserId),
       }
 

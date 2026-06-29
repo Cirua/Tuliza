@@ -13,6 +13,7 @@ function setupFrontendRoutes(app, { projectRoot, frontendRoot }) {
 
   /* Serve frontend assets (styles/scripts/media) from root URL */
   app.use(require('express').static(frontendRoot))
+  app.use('/frontend', require('express').static(frontendRoot))
 
   /* Expose only explicitly allowed additional static directories */
   app.use('/public', require('express').static(path.join(projectRoot, 'public')))

@@ -2,7 +2,7 @@
 // Server: ws://localhost:3000/server
 
 (function () {
-  const WS_URL = 'ws://localhost:3000/server';
+  const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/server`;
 
   // Elements
   const chatRoot = document.getElementById('tuliza-chat');
@@ -18,18 +18,13 @@
 
   const joinModal = chatRoot.querySelector('#chat-join-modal');
   const joinForm = chatRoot.querySelector('#chat-join-form');
-  const peersWrap = document.createElement('div');
-  peersWrap.style.margin = '12px 0';
-  peersWrap.style.display = 'none';
-  peersWrap.innerHTML = '<strong>Conversations</strong><div id="peer-list" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"></div>';
-  chatRoot.insertBefore(peersWrap, messagesEl);
-  const peerList = peersWrap.querySelector('#peer-list');
 
   // State
   let ws;
   let myRole = null;
   let myUserId = null;
-  let activePeer = { userId: null, role: null };
+  let myDisplayName = null;
+  let pendingJoinPayload = null;
   const seenMessageIds = new Set();
 
   // Helpers
@@ -40,7 +35,7 @@
     return role || '';
   }
 
-  function addMessage({ messageId, sender, text, timestamp, fromRole }) {
+  function addMessage({ messageId, sender, senderName, text, timestamp, fromRole }) {
     if (messageId && seenMessageIds.has(String(messageId))) return;
     if (messageId) seenMessageIds.add(String(messageId));
 
@@ -59,7 +54,9 @@
     const senderLine = document.createElement('div');
     senderLine.style.fontWeight = '600';
     senderLine.style.marginBottom = '6px';
-    senderLine.textContent = `${type === 'user' ? 'You' : safeSender}${fromRole ? ` (${roleLabel(fromRole)})` : ''}`;
+    const safeSenderName = String(senderName || '').trim();
+    const senderLabel = safeSenderName || safeSender;
+    senderLine.textContent = `${type === 'user' ? `You (${senderLabel})` : senderLabel}${fromRole ? ` (${roleLabel(fromRole)})` : ''}`;
 
     const textLine = document.createElement('div');
     textLine.style.whiteSpace = 'pre-wrap';
@@ -86,7 +83,10 @@
     ws = new WebSocket(WS_URL);
 
     ws.onopen = () => {
-      // Join happens after user submits the join form.
+      if (pendingJoinPayload) {
+        ws.send(JSON.stringify(pendingJoinPayload));
+        pendingJoinPayload = null;
+      }
     };
 
     ws.onmessage = (event) => {
@@ -99,8 +99,10 @@
 
       if (data.type === 'joined') {
         myRole = data.role || null;
-        const peer = data.peerUserId ? ` -> ${data.peerUserId}` : '';
-        header.textContent = `${data.userId} (${roleLabel(data.role)})${peer}`;
+        myDisplayName = data.displayName || data.userId;
+        const peerRoleText = data.peerRole ? roleLabel(data.peerRole) : '';
+        const peerName = data.peerDisplayName || data.peerUserId || 'Unassigned';
+        header.textContent = `${myDisplayName} (${roleLabel(data.role)}) -> ${peerName}${peerRoleText ? ` (${peerRoleText})` : ''}`;
         return;
       }
 
@@ -124,41 +126,18 @@
       addMessage(data);
     };
 
-    ws.onclose = () => {
-      // Keep UI simple; just log.
-      // If needed, we can show a retry message.
-      console.warn('WebSocket closed');
-    };
-  }
-
-  async function loadPeersFromDb(role, userId) {
-    if (role !== 'mentor' && role !== 'psychiatrist') return;
-    try {
-      const response = await fetch(`/api/chat/peers?role=${encodeURIComponent(role)}&userId=${encodeURIComponent(userId)}`);
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || !Array.isArray(payload.peers)) return;
-      if (payload.peers.length === 0) return;
-
-      peersWrap.style.display = '';
-      peerList.innerHTML = '';
-      payload.peers.forEach((peer) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn-ghost-modal';
-        btn.textContent = `${peer.peer_role} ${peer.peer_user_id}`;
-        btn.addEventListener('click', () => {
-          activePeer = { userId: String(peer.peer_user_id), role: String(peer.peer_role) };
-          joinConversation();
-        });
-        peerList.appendChild(btn);
+    ws.onclose = (event) => {
+      const reason = event && event.reason ? String(event.reason) : 'Connection closed';
+      header.textContent = `Disconnected (${reason})`;
+      addMessage({
+        messageId: `ws-close-${Date.now()}`,
+        sender: 'System',
+        senderName: 'System',
+        text: reason,
+        timestamp: new Date().toISOString(),
+        fromRole: null,
       });
-
-      if (!activePeer.userId && payload.peers[0]) {
-        activePeer = { userId: String(payload.peers[0].peer_user_id), role: String(payload.peers[0].peer_role) };
-      }
-    } catch (_) {
-      // Ignore peer list errors and allow default join flow.
-    }
+    };
   }
 
   function joinConversation() {
@@ -169,7 +148,8 @@
     myUserId = username; // server uses userId as dashboard id
 
     // Update UI header
-    header.textContent = `${username} (connecting...)`;
+    const connectingName = myDisplayName || username;
+    header.textContent = `${connectingName} (connecting...)`;
 
     // Join to the server
     let storedUser = {};
@@ -180,16 +160,20 @@
     }
     const roleHint = storedUser.role || new URLSearchParams(window.location.search).get('role') || undefined;
 
-    ws.send(
-      JSON.stringify({
-        type: 'join',
-        userId: myUserId,
-        authToken: sessionStorage.getItem('tuliza_session_token') || undefined,
-        roleHint,
-        peerUserId: activePeer.userId || new URLSearchParams(window.location.search).get('peerId') || undefined,
-        peerRole: activePeer.role || new URLSearchParams(window.location.search).get('peerRole') || undefined,
-      })
-    );
+    const joinPayload = {
+      type: 'join',
+      userId: myUserId,
+      authToken: sessionStorage.getItem('tuliza_session_token') || undefined,
+      roleHint,
+      peerUserId: new URLSearchParams(window.location.search).get('peerId') || undefined,
+      peerRole: new URLSearchParams(window.location.search).get('peerRole') || undefined,
+    };
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(joinPayload));
+    } else {
+      pendingJoinPayload = joinPayload;
+    }
 
     joinModal.style.display = 'none';
   }
@@ -247,9 +231,10 @@
   const sessionUserId = storedUser?.userId || new URLSearchParams(window.location.search).get('userId') || '';
   if (sessionUserId) {
     nameInput.value = sessionUserId;
-    loadPeersFromDb(storedUser?.role, sessionUserId).finally(() => {
-      joinConversation();
-    });
+    joinConversation();
+  } else {
+    // Fallback for cases where session identity is unavailable.
+    joinModal.style.display = 'flex';
   }
 })();
 

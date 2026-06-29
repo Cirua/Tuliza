@@ -1159,11 +1159,14 @@ function setupAuthRoutes(app, dbPool) {
         redirectTo = needsQuestionnaire ? 'questionnaire.html' : 'student.html'
       }
 
+      const sessionToken = createSessionToken({ userId: profileUserId, role: normalizedRole })
+
       return res.json({
         ok: true,
         role: normalizedRole,
         signupId: String(parsedSignupId),
         userId: profileUserId,
+        sessionToken,
         profileComplete: true,
         needsQuestionnaire,
         redirectTo,
@@ -1383,48 +1386,126 @@ function setupAuthRoutes(app, dbPool) {
       const userId = Number(req.query.userId)
       if (!role || !Number.isInteger(userId)) return res.status(400).json({ error: 'role and userId are required' })
 
+      let resolvedUserId = userId
+
+      if (role === 'student') {
+        const resolved = await dbPool.query(
+          `
+          SELECT student_id
+          FROM student
+          WHERE student_id = $1 OR signup_id = $1
+          ORDER BY CASE WHEN student_id = $1 THEN 0 ELSE 1 END
+          LIMIT 1
+          `,
+          [userId]
+        )
+        if (resolved.rows[0]) {
+          resolvedUserId = Number(resolved.rows[0].student_id)
+        }
+      }
+
+      if (role === 'mentor') {
+        const resolved = await dbPool.query(
+          `
+          SELECT mentor_id
+          FROM mentor
+          WHERE mentor_id = $1 OR signup_id = $1
+          ORDER BY CASE WHEN mentor_id = $1 THEN 0 ELSE 1 END
+          LIMIT 1
+          `,
+          [userId]
+        )
+        if (resolved.rows[0]) {
+          resolvedUserId = Number(resolved.rows[0].mentor_id)
+        }
+      }
+
+      if (role === 'psychiatrist') {
+        const resolved = await dbPool.query(
+          `
+          SELECT psychiatrist_id
+          FROM psychiatrist
+          WHERE psychiatrist_id = $1 OR signup_id = $1
+          ORDER BY CASE WHEN psychiatrist_id = $1 THEN 0 ELSE 1 END
+          LIMIT 1
+          `,
+          [userId]
+        )
+        if (resolved.rows[0]) {
+          resolvedUserId = Number(resolved.rows[0].psychiatrist_id)
+        }
+      }
+
       if (role === 'student') {
         const result = await dbPool.query(
           `
           SELECT DISTINCT
-            COALESCE(m.mentor_id::text, m.psychiatrist_id::text) AS peer_user_id,
-            CASE WHEN m.mentor_id IS NOT NULL THEN 'mentor' ELSE 'psychiatrist' END AS peer_role
-          FROM messages m
-          WHERE m.student_id = $1 AND (m.mentor_id IS NOT NULL OR m.psychiatrist_id IS NOT NULL)
+            peer_user_id,
+            peer_role,
+            display_name
+          FROM (
+            SELECT
+              a.mentor_id::text AS peer_user_id,
+              'mentor' AS peer_role,
+              m.full_name AS display_name
+            FROM assignments a
+            INNER JOIN mentor m ON m.mentor_id = a.mentor_id
+            WHERE a.student_id = $1
+              AND a.mentor_id IS NOT NULL
+
+            UNION ALL
+
+            SELECT
+              a.psychiatrist_id::text AS peer_user_id,
+              'psychiatrist' AS peer_role,
+              p.full_name AS display_name
+            FROM assignments a
+            INNER JOIN psychiatrist p ON p.psychiatrist_id = a.psychiatrist_id
+            WHERE a.student_id = $1
+              AND a.psychiatrist_id IS NOT NULL
+          ) peer_rows
           ORDER BY peer_user_id
           `,
-          [userId]
+          [resolvedUserId]
         )
-        return res.json({ ok: true, peers: result.rows })
+        return res.json({ ok: true, resolvedUserId: String(resolvedUserId), peers: result.rows })
       }
 
       if (role === 'mentor') {
         const result = await dbPool.query(
           `
-          SELECT DISTINCT m.student_id::text AS peer_user_id, 'student' AS peer_role
-          FROM messages m
-          WHERE m.mentor_id = $1 AND m.student_id IS NOT NULL
+          SELECT DISTINCT
+            a.student_id::text AS peer_user_id,
+            'student' AS peer_role,
+            s.username AS display_name
+          FROM assignments a
+          INNER JOIN student s ON s.student_id = a.student_id
+          WHERE a.mentor_id = $1 AND a.student_id IS NOT NULL
           ORDER BY peer_user_id
           `,
-          [userId]
+          [resolvedUserId]
         )
-        return res.json({ ok: true, peers: result.rows })
+        return res.json({ ok: true, resolvedUserId: String(resolvedUserId), peers: result.rows })
       }
 
       if (role === 'psychiatrist') {
         const result = await dbPool.query(
           `
-          SELECT DISTINCT m.student_id::text AS peer_user_id, 'student' AS peer_role
-          FROM messages m
-          WHERE m.psychiatrist_id = $1 AND m.student_id IS NOT NULL
+          SELECT DISTINCT
+            a.student_id::text AS peer_user_id,
+            'student' AS peer_role,
+            s.username AS display_name
+          FROM assignments a
+          INNER JOIN student s ON s.student_id = a.student_id
+          WHERE a.psychiatrist_id = $1 AND a.student_id IS NOT NULL
           ORDER BY peer_user_id
           `,
-          [userId]
+          [resolvedUserId]
         )
-        return res.json({ ok: true, peers: result.rows })
+        return res.json({ ok: true, resolvedUserId: String(resolvedUserId), peers: result.rows })
       }
 
-      return res.json({ ok: true, peers: [] })
+      return res.json({ ok: true, resolvedUserId: String(resolvedUserId), peers: [] })
     } catch (err) {
       console.error('Failed to load chat peers:', err.message)
       return res.status(500).json({ error: 'Failed to load peers' })

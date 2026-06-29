@@ -308,8 +308,7 @@ async function initializeDatabase(dbPool) {
   await dbPool.query(`
     CREATE TABLE IF NOT EXISTS messages (
       message_id SERIAL PRIMARY KEY,
-      sent_message TEXT,
-      received_message TEXT,
+      encrypted_message TEXT,
       sent_at TIMESTAMPTZ,
       student_id INT,
       mentor_id INT,
@@ -320,9 +319,49 @@ async function initializeDatabase(dbPool) {
     )
   `)
 
+  await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS encrypted_message TEXT')
+  await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ')
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS student_id INT')
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS mentor_id INT')
   await dbPool.query('ALTER TABLE messages ADD COLUMN IF NOT EXISTS psychiatrist_id INT')
+
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'sent_message'
+      ) THEN
+        UPDATE messages
+        SET encrypted_message = json_build_object(
+          'text', sent_message,
+          'senderRole', 'student',
+          'senderId', student_id
+        )::text
+        WHERE encrypted_message IS NULL
+          AND sent_message IS NOT NULL
+          AND btrim(sent_message) <> '';
+      END IF;
+
+      IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'messages' AND column_name = 'received_message'
+      ) THEN
+        UPDATE messages
+        SET encrypted_message = json_build_object(
+          'text', received_message,
+          'senderRole', CASE WHEN mentor_id IS NOT NULL THEN 'mentor' ELSE 'psychiatrist' END,
+          'senderId', COALESCE(mentor_id, psychiatrist_id)
+        )::text
+        WHERE encrypted_message IS NULL
+          AND received_message IS NOT NULL
+          AND btrim(received_message) <> '';
+      END IF;
+    END $$;
+  `)
+
+  await dbPool.query('ALTER TABLE messages DROP COLUMN IF EXISTS sent_message')
+  await dbPool.query('ALTER TABLE messages DROP COLUMN IF EXISTS received_message')
 
   await dbPool.query('ALTER TABLE messages DROP CONSTRAINT IF EXISTS fk_msg_student')
   await dbPool.query('ALTER TABLE messages DROP CONSTRAINT IF EXISTS fk_msg_mentor')
