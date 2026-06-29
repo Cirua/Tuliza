@@ -309,6 +309,7 @@ async function resolveStudentIdForQuestionnaire(dbPool, rawStudentId) {
 
   const signup = signupRow.rows[0]
   const username = buildStudentUsername(signup.email)
+  await ensureStudentIdAutoIncrement(dbPool)
   const inserted = await dbPool.query(
     `
     INSERT INTO student (signup_id, email, username)
@@ -321,6 +322,43 @@ async function resolveStudentIdForQuestionnaire(dbPool, rawStudentId) {
   )
 
   return inserted.rows[0] ? Number(inserted.rows[0].student_id) : null
+}
+
+async function ensureStudentIdAutoIncrement(dbPool) {
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'student'
+          AND column_name = 'student_id'
+      ) THEN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'public'
+            AND table_name = 'student'
+            AND column_name = 'student_id'
+            AND column_default IS NOT NULL
+        ) THEN
+          IF to_regclass('public.student_student_id_seq') IS NULL THEN
+            CREATE SEQUENCE public.student_student_id_seq;
+          END IF;
+
+          PERFORM setval(
+            'public.student_student_id_seq',
+            COALESCE((SELECT MAX(student_id) FROM student), 0) + 1,
+            false
+          );
+
+          ALTER TABLE student
+            ALTER COLUMN student_id SET DEFAULT nextval('public.student_student_id_seq');
+        END IF;
+      END IF;
+    END $$;
+  `)
 }
 
 async function syncLegacyStudentTableIfPresent(dbPool, studentId) {
@@ -899,9 +937,9 @@ function setupAuthRoutes(app, dbPool) {
         role,
         fullName,
         username,
+        studentId,
         gender,
         phoneNo,
-        questionnaire,
         modeOfPayment,
         certification,
         licenceNumber,
@@ -941,24 +979,27 @@ function setupAuthRoutes(app, dbPool) {
 
       let profileUserId = null
       if (normalizedRole === 'student') {
+        await ensureStudentIdAutoIncrement(dbPool)
+
         const safeFullName = String(fullName || '').trim() || buildDisplayName(email)
         const safeUsername = String(username || '').trim() || buildStudentUsername(email)
+        const safeStudentIdentifier = String(studentId || '').trim() || null
         const safeGender = String(gender || '').trim() || null
         const safePhoneNo = phoneNo == null || String(phoneNo).trim() === '' ? null : Number(phoneNo)
-        const safeQuestionnaire = String(questionnaire || '').trim() || null
         const safeModeOfPayment = String(modeOfPayment || '').trim() || null
 
         await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS full_name VARCHAR(100)')
         await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)')
+        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS student_identifier VARCHAR(50)')
         await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS gender VARCHAR(20)')
         await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS phone_no INT')
-        await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS questionnaire VARCHAR(250)')
         await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS mode_of_payment VARCHAR(50)')
+        await dbPool.query('ALTER TABLE student DROP COLUMN IF EXISTS questionnaire')
 
         const studentUpsert = await dbPool.query(
           `
           INSERT INTO student (
-            signup_id, full_name, email, username, password_hash, gender, phone_no, questionnaire, mode_of_payment
+            signup_id, full_name, email, username, password_hash, student_identifier, gender, phone_no, mode_of_payment
           )
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
           ON CONFLICT (signup_id)
@@ -967,9 +1008,9 @@ function setupAuthRoutes(app, dbPool) {
             email = EXCLUDED.email,
             username = EXCLUDED.username,
             password_hash = EXCLUDED.password_hash,
+            student_identifier = EXCLUDED.student_identifier,
             gender = EXCLUDED.gender,
             phone_no = EXCLUDED.phone_no,
-            questionnaire = EXCLUDED.questionnaire,
             mode_of_payment = EXCLUDED.mode_of_payment
           RETURNING student_id
           `,
@@ -979,9 +1020,9 @@ function setupAuthRoutes(app, dbPool) {
             email,
             safeUsername,
             passwordHash,
+            safeStudentIdentifier,
             safeGender,
             safePhoneNo,
-            safeQuestionnaire,
             safeModeOfPayment,
           ]
         )

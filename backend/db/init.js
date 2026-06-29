@@ -69,6 +69,33 @@ async function initializeDatabase(dbPool) {
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS signup_id INT')
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS email VARCHAR(150)')
   await dbPool.query('ALTER TABLE student ADD COLUMN IF NOT EXISTS username VARCHAR(100)')
+  await dbPool.query('ALTER TABLE student DROP COLUMN IF EXISTS questionnaire')
+  await dbPool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'student'
+          AND column_name = 'student_id'
+          AND column_default IS NOT NULL
+      ) THEN
+        IF to_regclass('public.student_student_id_seq') IS NULL THEN
+          CREATE SEQUENCE public.student_student_id_seq;
+        END IF;
+
+        PERFORM setval(
+          'public.student_student_id_seq',
+          COALESCE((SELECT MAX(student_id) FROM student), 0) + 1,
+          false
+        );
+
+        ALTER TABLE student
+          ALTER COLUMN student_id SET DEFAULT nextval('public.student_student_id_seq');
+      END IF;
+    END $$;
+  `)
   await dbPool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_student_signup_unique ON student(signup_id)')
 
   await dbPool.query(`
