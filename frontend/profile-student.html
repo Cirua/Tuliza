@@ -53,6 +53,9 @@
         msg.textContent = data.error || 'Failed to save profile';
         return;
       }
+      if (data.sessionToken) {
+        sessionStorage.setItem('tuliza_session_token', data.sessionToken);
+      }
       sessionStorage.setItem('tuliza_session_user', JSON.stringify({ ...sessionUser, userId: data.userId, role: data.role, signupId: data.signupId }));
       window.location.href = data.redirectTo || 'questionnaire.html';
     });
