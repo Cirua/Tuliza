@@ -11,7 +11,7 @@
 </head>
 <body>
   <nav class="navbar" aria-label="Main navigation">
-    <a class="logo" href="tuliza-frontend.html">
+    <a class="logo" href="student.html">
       <div class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
@@ -20,13 +20,6 @@
       <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
     </a>
 
-    <div class="nav-tabs" role="navigation" aria-label="Section links">
-      <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
-      <a class="nav-tab" href="chat-ui.html">Chat</a>
-      <a class="nav-tab" href="resources.html">Resources</a>
-      <a class="nav-tab" href="journal.html">Journal</a>
-      <a class="nav-tab" href="account.html">Account</a>
-    </div>
   </nav>
 
   <main class="auth-main fade-up">
@@ -39,134 +32,143 @@
 
     <section id="student-questionnaire" class="auth-card fade-up fade-up-delay-1" style="margin-top:20px;">
       <form id="prefs-form">
-        <div id="slide-progress" class="slide-progress">Question 1 of 14</div>
+        <div id="slide-progress" class="slide-progress">Question 1 of 13</div>
         <div class="slide-progress-wrap" aria-hidden="true">
           <div id="slide-progress-bar" class="slide-progress-bar" style="width:7.14%;"></div>
         </div>
 
         <div class="slide-container">
           <div class="question-slide active" data-slide="1">
-            <label class="form-label" for="q-gender">Gender</label>
-            <select id="q-gender" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="Female">Female</option>
-              <option value="Male">Male</option>
-              <option value="Non-binary">Non-binary</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </select>
+            <p class="form-label">Have you previously sought mental health support?</p>
+            <input id="q-mental-health-support-yes" class="form-select" type="radio" name="mentalHealthSupport" value="yes" required>
+            <label class="form-label" for="q-mental-health-support-yes">Yes</label>
+            <input id="q-mental-health-support-no" class="form-select" type="radio" name="mentalHealthSupport" value="no" required>
+            <label class="form-label" for="q-mental-health-support-no">No</label>
           </div>
 
           <div class="question-slide" data-slide="2" style="display:none;">
-            <label class="form-label" for="q-age">Age</label>
-            <input id="q-age" class="form-input" type="number" min="16" max="99" required />
+            <p class="form-label">Which of the following best describes your main concern? (Select all that apply)</p>
+            <input id="q-main-concern-anxiety" class="form-select" type="checkbox" name="concerns" value="Anxiety">
+            <label class="form-label" for="q-main-concern-anxiety">Anxiety</label>
+            <input id="q-main-concern-depression" class="form-select" type="checkbox" name="concerns" value="Depression">
+            <label class="form-label" for="q-main-concern-depression">Depression</label>
+            <input id="q-main-concern-academic" class="form-select" type="checkbox" name="concerns" value="Academic Stress">
+            <label class="form-label" for="q-main-concern-academic">Academic Stress</label>
+            <input id="q-main-concern-family" class="form-select" type="checkbox" name="concerns" value="Family Problems">
+            <label class="form-label" for="q-main-concern-family">Family Problems</label>
+            <input id="q-main-concern-financial" class="form-select" type="checkbox" name="concerns" value="Financial Problems">
+            <label class="form-label" for="q-main-concern-financial">Financial Problems</label>
+            <input id="q-main-concern-relationship" class="form-select" type="checkbox" name="concerns" value="Relationship issues">
+            <label class="form-label" for="q-main-concern-relationship">Relationship issues</label>
+            <input id="q-main-concern-motivation" class="form-select" type="checkbox" name="concerns" value="Loss of Motivation">
+            <label class="form-label" for="q-main-concern-motivation">Loss of Motivation</label>
+            <input id="q-main-concern-grief" class="form-select" type="checkbox" name="concerns" value="Grief or Loss">
+            <label class="form-label" for="q-main-concern-grief">Grief or Loss</label>
+            <input id="q-main-concern-other" class="form-select" type="checkbox" name="concerns" value="Other">
+            <label class="form-label" for="q-main-concern-other">Other</label>
           </div>
 
           <div class="question-slide" data-slide="3" style="display:none;">
-            <label class="form-label" for="q-status">Relationship status</label>
-            <select id="q-status" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="Single">Single</option>
-              <option value="In a relationship">In a relationship</option>
-              <option value="Married">Married</option>
-              <option value="Complicated">Complicated</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </select>
+            <p class="form-label">How long have you been experiencing this challenge?</p>
+            <input id="q-status-lt2" class="form-select" type="radio" name="periodAffected" value="Less than 2 weeks" required>
+            <label class="form-label" for="q-status-lt2">Less than 2 weeks</label>
+            <input id="q-status-2to4" class="form-select" type="radio" name="periodAffected" value="2-4 weeks" required>
+            <label class="form-label" for="q-status-2to4">2-4 weeks</label>
+            <input id="q-status-1to3" class="form-select" type="radio" name="periodAffected" value="1-3 months" required>
+            <label class="form-label" for="q-status-1to3">1-3 months</label>
+            <input id="q-status-gt3" class="form-select" type="radio" name="periodAffected" value="more than 3 months" required>
+            <label class="form-label" for="q-status-gt3">More than 3 months</label>
           </div>
 
           <div class="question-slide" data-slide="4" style="display:none;">
-            <label class="form-label" for="q-religion-importance">How important is religion in your life?</label>
-            <select id="q-religion-importance" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="not">Not important</option>
-              <option value="somewhat">Somewhat important</option>
-              <option value="important">Important</option>
-              <option value="very">Very important</option>
-            </select>
+            <p class="form-label">Which support do you prefer?</p>
+            <input id="q-support-mentor" class="form-select" type="radio" name="supportType" value="Peer mentor" required>
+            <label class="form-label" for="q-support-mentor">Peer support from a mentor</label>
+            <input id="q-support-professional" class="form-select" type="radio" name="supportType" value="Professional support from a psychiatrist" required>
+            <label class="form-label" for="q-support-professional">Professional support from a psychiatrist</label>
+            <input id="q-support-either" class="form-select" type="radio" name="supportType" value="Either" required>
+            <label class="form-label" for="q-support-either">Either option</label>
+            <input id="q-support-not-sure" class="form-select" type="radio" name="supportType" value="Not sure" required>
+            <label class="form-label" for="q-support-not-sure">Not sure</label>
           </div>
 
           <div class="question-slide" data-slide="5" style="display:none;">
+            <p class="form-label">Which kind of support are you looking for?</p>
+            <input id="q-support-preference-listen" class="form-select" type="radio" name="supportPreference" value="Someone to listen" required>
+            <label class="form-label" for="q-support-preference-listen">Someone to listen</label>
+            <input id="q-support-preference-academic" class="form-select" type="radio" name="supportPreference" value="Academic guidance" required>
+            <label class="form-label" for="q-support-preference-academic">Academic Guidance</label>
+            <input id="q-support-preference-stress" class="form-select" type="radio" name="supportPreference" value="Stress management" required>
+            <label class="form-label" for="q-support-preference-stress">Stress Management</label>
+            <input id="q-support-preference-emotional" class="form-select" type="radio" name="supportPreference" value="Emotional support" required>
+            <label class="form-label" for="q-support-preference-emotional">Emotional Support</label>
+            <input id="q-support-preference-professional" class="form-select" type="radio" name="supportPreference" value="Professional support" required>
+            <label class="form-label" for="q-support-preference-professional">Professional Support</label>
+          </div>
+
+          <div class="question-slide" data-slide="6" style="display:none;">
             <label class="form-label" for="q-religion">Religion</label>
             <input id="q-religion" class="form-input" type="text" required />
           </div>
 
-          <div class="question-slide" data-slide="6" style="display:none;">
-            <label class="form-label" for="q-christian-match">Do you prefer Christian-based therapy?</label>
-            <select id="q-christian-match" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-              <option value="open">Open to either</option>
-            </select>
-          </div>
-
           <div class="question-slide" data-slide="7" style="display:none;">
-            <label class="form-label" for="q-spiritual">Do you consider yourself spiritual?</label>
-            <select id="q-spiritual" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-              <option value="somewhat">Somewhat</option>
-            </select>
+            <p class="form-label">Do you prefer Christian-based therapy? (Select all that apply)</p>
+            <input id="q-christian-match-yes" class="form-select" type="checkbox" name="religionType" value="yes">
+            <label class="form-label" for="q-christian-match-yes">Yes</label>
+            <input id="q-christian-match-no" class="form-select" type="checkbox" name="religionType" value="no">
+            <label class="form-label" for="q-christian-match-no">No</label>
+            <input id="q-christian-match-open" class="form-select" type="checkbox" name="religionType" value="open">
+            <label class="form-label" for="q-christian-match-open">Open to either</label>
           </div>
 
           <div class="question-slide" data-slide="8" style="display:none;">
-            <label class="form-label" for="q-therapy-before">Have you been in therapy before?</label>
-            <select id="q-therapy-before" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
+            <p class="form-label">Do you consider yourself spiritual? (Select all that apply)</p>
+            <input id="q-spiritual-yes" class="form-select" type="checkbox" name="spiritualStatus" value="yes">
+            <label class="form-label" for="q-spiritual-yes">Yes</label>
+            <input id="q-spiritual-no" class="form-select" type="checkbox" name="spiritualStatus" value="no">
+            <label class="form-label" for="q-spiritual-no">No</label>
+            <input id="q-spiritual-somewhat" class="form-select" type="checkbox" name="spiritualStatus" value="somewhat">
+            <label class="form-label" for="q-spiritual-somewhat">Somewhat</label>
           </div>
 
           <div class="question-slide" data-slide="9" style="display:none;">
+            <p class="form-label">Have you been in therapy before?</p>
+            <input id="q-therapy-before-yes" class="form-select" type="radio" name="therapyBefore" value="yes" required>
+            <label class="form-label" for="q-therapy-before-yes">Yes</label>
+            <input id="q-therapy-before-no" class="form-select" type="radio" name="therapyBefore" value="no" required>
+            <label class="form-label" for="q-therapy-before-no">No</label>
+          </div>
+
+          <div class="question-slide" data-slide="10" style="display:none;">
             <label class="form-label" for="q-why-now">What led you to seek support now?</label>
             <textarea id="q-why-now" class="form-textarea" required></textarea>
           </div>
 
-          <div class="question-slide" data-slide="10" style="display:none;">
+          <div class="question-slide" data-slide="11" style="display:none;">
             <label class="form-label" for="q-expectations">What are your expectations from support?</label>
             <textarea id="q-expectations" class="form-textarea" required></textarea>
           </div>
 
-          <div class="question-slide" data-slide="11" style="display:none;">
-            <label class="form-label" for="q-tone">Preferred therapist tone</label>
-            <select id="q-tone" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="gentle">Gentle</option>
-              <option value="direct">Direct</option>
-              <option value="balanced">Balanced</option>
-            </select>
-          </div>
-
           <div class="question-slide" data-slide="12" style="display:none;">
-            <label class="form-label" for="q-structure">Preferred session structure</label>
-            <select id="q-structure" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="flexible">Flexible</option>
-              <option value="structured">Structured</option>
-              <option value="balanced">Balanced</option>
-            </select>
+            <p class="form-label">Preferred session structure (Select all that apply)</p>
+            <input id="q-structure-flexible" class="form-select" type="checkbox" name="sessionStructure" value="flexible">
+            <label class="form-label" for="q-structure-flexible">Flexible</label>
+            <input id="q-structure-structured" class="form-select" type="checkbox" name="sessionStructure" value="structured">
+            <label class="form-label" for="q-structure-structured">Structured</label>
+            <input id="q-structure-balanced" class="form-select" type="checkbox" name="sessionStructure" value="balanced">
+            <label class="form-label" for="q-structure-balanced">Balanced</label>
           </div>
 
           <div class="question-slide" data-slide="13" style="display:none;">
-            <label class="form-label" for="q-style">Preferred communication style</label>
-            <select id="q-style" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="casual">Casual</option>
-              <option value="formal">Formal</option>
-              <option value="balanced">Balanced</option>
-            </select>
+            <p class="form-label">Preferred communication style (Select all that apply)</p>
+            <input id="q-style-casual" class="form-select" type="checkbox" name="communicationStyle" value="casual">
+            <label class="form-label" for="q-style-casual">Casual</label>
+            <input id="q-style-formal" class="form-select" type="checkbox" name="communicationStyle" value="formal">
+            <label class="form-label" for="q-style-formal">Formal</label>
+            <input id="q-style-balanced" class="form-select" type="checkbox" name="communicationStyle" value="balanced">
+            <label class="form-label" for="q-style-balanced">Balanced</label>
           </div>
 
-          <div class="question-slide" data-slide="14" style="display:none;">
-            <label class="form-label" for="q-role">Preferred professional</label>
-            <select id="q-role" class="form-select" required>
-              <option value="">Select one</option>
-              <option value="Mentor">Mentor</option>
-              <option value="Psychologist">Psychologist</option>
-              <option value="Either">Either</option>
-            </select>
-          </div>
         </div>
 
         <div class="slide-nav">
@@ -186,6 +188,8 @@
     const nextBtn = document.getElementById('next-slide');
     const submitBtn = document.getElementById('submit-slides');
     const studentResult = document.getElementById('student-result');
+    const slideProgress = document.getElementById('slide-progress');
+    const slideProgressBar = document.getElementById('slide-progress-bar');
 
     let sessionUser = null;
     try {
@@ -199,32 +203,124 @@
     }
 
     const slides = Array.from(document.querySelectorAll('.question-slide'));
+    let currentSlideIndex = 0;
+
     slides.forEach((slide) => {
       slide.style.display = '';
     });
 
-    submitBtn.style.display = 'inline-flex';
-    nextBtn.style.display = 'none';
-    prevBtn.style.display = 'none';
+    function updateSlideState() {
+      slides.forEach((slide, index) => {
+        slide.classList.toggle('active', index === currentSlideIndex);
+      });
+
+      const questionNumber = currentSlideIndex + 1;
+      const totalQuestions = slides.length;
+      const progressPercent = (questionNumber / totalQuestions) * 100;
+
+      slideProgress.textContent = `Question ${questionNumber} of ${totalQuestions}`;
+      slideProgressBar.style.width = `${progressPercent}%`;
+
+      prevBtn.style.display = currentSlideIndex === 0 ? 'none' : 'inline-flex';
+      nextBtn.style.display = currentSlideIndex === slides.length - 1 ? 'none' : 'inline-flex';
+      submitBtn.style.display = currentSlideIndex === slides.length - 1 ? 'inline-flex' : 'none';
+
+      studentResult.style.display = 'none';
+    }
+
+    function validateSlide(index) {
+      const slide = slides[index];
+      const requiredFields = Array.from(slide.querySelectorAll('input[required], select[required], textarea[required]'));
+      const checkedRadioNames = new Set();
+      const checkboxNames = Array.from(new Set(Array.from(slide.querySelectorAll('input[type="checkbox"][name]')).map((input) => input.name)));
+
+      for (const checkboxName of checkboxNames) {
+        const checked = slide.querySelector(`input[type="checkbox"][name="${checkboxName}"]:checked`);
+        if (!checked) {
+          const firstCheckbox = slide.querySelector(`input[type="checkbox"][name="${checkboxName}"]`);
+          if (firstCheckbox) firstCheckbox.focus();
+          return false;
+        }
+      }
+
+      for (const field of requiredFields) {
+        if (field.type === 'radio') {
+          if (checkedRadioNames.has(field.name)) continue;
+          checkedRadioNames.add(field.name);
+
+          const selected = slide.querySelector(`input[type="radio"][name="${field.name}"]:checked`);
+          if (!selected) {
+            field.focus();
+            field.reportValidity();
+            return false;
+          }
+          continue;
+        }
+
+        if (!field.checkValidity()) {
+          field.focus();
+          field.reportValidity();
+          return false;
+        }
+      }
+
+      return true;
+    }
+
+    prevBtn.addEventListener('click', () => {
+      if (currentSlideIndex === 0) return;
+      currentSlideIndex -= 1;
+      updateSlideState();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (!validateSlide(currentSlideIndex)) return;
+      if (currentSlideIndex >= slides.length - 1) return;
+      currentSlideIndex += 1;
+      updateSlideState();
+    });
+
+    prefsForm.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      if (currentSlideIndex >= slides.length - 1) return;
+
+      const target = event.target;
+      if (target && target.tagName === 'TEXTAREA') return;
+
+      event.preventDefault();
+      nextBtn.click();
+    });
+
+    updateSlideState();
+
+    function selectedValue(name) {
+      const chosen = document.querySelector(`input[name="${name}"]:checked`);
+      return chosen ? chosen.value : '';
+    }
+
+    function selectedValues(name) {
+      return Array.from(document.querySelectorAll(`input[name="${name}"]:checked`)).map((input) => input.value);
+    }
 
     prefsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      if (!validateSlide(currentSlideIndex)) return;
+
       const answers = {
-        gender: document.getElementById('q-gender').value,
-        age: document.getElementById('q-age').value,
-        relationshipStatus: document.getElementById('q-status').value,
-        religionImportance: document.getElementById('q-religion-importance').value,
+        mentalHealthSupport: selectedValue('mentalHealthSupport'),
+        concerns: selectedValues('concerns').join(', '),
+        period_affected: selectedValue('periodAffected'),
+        support_type: selectedValue('supportType'),
+        support_preferences: selectedValue('supportPreference'),
         religion: document.getElementById('q-religion').value,
-        christianMatch: document.getElementById('q-christian-match').value,
-        spiritual: document.getElementById('q-spiritual').value,
-        therapyBefore: document.getElementById('q-therapy-before').value,
-        whyNow: document.getElementById('q-why-now').value,
+        religion_type: selectedValues('religionType').join(', '),
+        spiritual_status: selectedValues('spiritualStatus').join(', '),
+        therapy_status: selectedValue('therapyBefore'),
+        seek_support: document.getElementById('q-why-now').value,
         expectations: document.getElementById('q-expectations').value,
-        tone: document.getElementById('q-tone').value,
-        structure: document.getElementById('q-structure').value,
-        style: document.getElementById('q-style').value,
-        preferredProfessional: document.getElementById('q-role').value,
+        session_structure: selectedValues('sessionStructure').join(', '),
+        communication: selectedValues('communicationStyle').join(', '),
       };
 
       try {

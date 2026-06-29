@@ -44,23 +44,18 @@
     <section class="role-kpi-grid fade-up fade-up-delay-1" aria-label="Mentor metrics">
       <article class="role-kpi-card">
         <p class="role-kpi-label">Assigned students</p>
-        <p class="role-kpi-value">18</p>
-        <p class="role-kpi-meta">4 new this week</p>
+        <p id="mentor-kpi-assigned" class="role-kpi-value">-</p>
+        <p class="role-kpi-meta">Current assignment load</p>
       </article>
       <article class="role-kpi-card">
-        <p class="role-kpi-label">Sessions today</p>
-        <p class="role-kpi-value">6</p>
-        <p class="role-kpi-meta">2 completed</p>
+        <p class="role-kpi-label">Newest assignment</p>
+        <p id="mentor-kpi-newest" class="role-kpi-value">-</p>
+        <p class="role-kpi-meta">Most recently assigned student</p>
       </article>
       <article class="role-kpi-card">
-        <p class="role-kpi-label">Unread check-ins</p>
-        <p class="role-kpi-value">9</p>
-        <p class="role-kpi-meta">2 flagged for follow-up</p>
-      </article>
-      <article class="role-kpi-card">
-        <p class="role-kpi-label">Response time</p>
-        <p class="role-kpi-value">12m</p>
-        <p class="role-kpi-meta">Target under 20m</p>
+        <p class="role-kpi-label">Uncontacted assigned</p>
+        <p id="mentor-kpi-uncontacted" class="role-kpi-value">-</p>
+        <p class="role-kpi-meta">Assigned students with no chat yet</p>
       </article>
     </section>
 
@@ -76,32 +71,14 @@
               <tr>
                 <th>Student</th>
                 <th>Concern</th>
-                <th>Slot</th>
-                <th>Priority</th>
-                <th>Action</th>
+                <th>Support history</th>
+                <th>Religion profile</th>
+                <th>Intent</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="mentor-queue-body">
               <tr>
-                <td>Starling_92</td>
-                <td>Exam anxiety</td>
-                <td>10:30</td>
-                <td><span class="role-pill warning">Medium</span></td>
-                <td><button class="role-mini-btn">Open chat</button></td>
-              </tr>
-              <tr>
-                <td>BlueRiver_14</td>
-                <td>Social isolation</td>
-                <td>11:45</td>
-                <td><span class="role-pill">Low</span></td>
-                <td><button class="role-mini-btn">Open chat</button></td>
-              </tr>
-              <tr>
-                <td>CalmOrbit_33</td>
-                <td>Burnout signs</td>
-                <td>14:00</td>
-                <td><span class="role-pill high">High</span></td>
-                <td><button class="role-mini-btn">Escalate</button></td>
+                <td colspan="5">Loading assigned students...</td>
               </tr>
             </tbody>
           </table>
@@ -126,6 +103,113 @@
       </aside>
     </section>
   </main>
+
+  <script>
+    const mentorQueueBody = document.getElementById('mentor-queue-body');
+    const mentorKpiAssigned = document.getElementById('mentor-kpi-assigned');
+    const mentorKpiNewest = document.getElementById('mentor-kpi-newest');
+    const mentorKpiUncontacted = document.getElementById('mentor-kpi-uncontacted');
+
+    function safeText(value) {
+      return String(value || '').trim() || '-';
+    }
+
+    function renderMessage(message) {
+      mentorQueueBody.innerHTML = '';
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 5;
+      cell.textContent = message;
+      row.appendChild(cell);
+      mentorQueueBody.appendChild(row);
+    }
+
+    function renderRows(rows) {
+      mentorQueueBody.innerHTML = '';
+      rows.forEach((row) => {
+        const tr = document.createElement('tr');
+
+        const username = document.createElement('td');
+        username.textContent = safeText(row.username);
+
+        const concern = document.createElement('td');
+        concern.textContent = safeText(row.concerns);
+
+        const supportHistory = document.createElement('td');
+        supportHistory.textContent = safeText(row.mentalhealthsupport);
+
+        const religionProfile = document.createElement('td');
+        religionProfile.textContent = `${safeText(row.religion)} / ${safeText(row.religion_type)} / spiritual: ${safeText(row.spiritual_status)}`;
+
+        const intent = document.createElement('td');
+        intent.textContent = `Now: ${safeText(row.seek_support)} | Expectation: ${safeText(row.expectations)}`;
+
+        tr.appendChild(username);
+        tr.appendChild(concern);
+        tr.appendChild(supportHistory);
+        tr.appendChild(religionProfile);
+        tr.appendChild(intent);
+        mentorQueueBody.appendChild(tr);
+      });
+    }
+
+    function updateSummary(rows) {
+      const total = rows.length;
+      const uncontacted = rows.filter((row) => !row.has_contact).length;
+      const newest = rows[0] && rows[0].username ? String(rows[0].username) : '-';
+
+      mentorKpiAssigned.textContent = String(total);
+      mentorKpiNewest.textContent = safeText(newest);
+      mentorKpiUncontacted.textContent = String(uncontacted);
+    }
+
+    function clearSummary() {
+      mentorKpiAssigned.textContent = '0';
+      mentorKpiNewest.textContent = '-';
+      mentorKpiUncontacted.textContent = '0';
+    }
+
+    async function loadMentorAssignments() {
+      let sessionUser = null;
+      try {
+        sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      } catch (_) {
+        sessionUser = null;
+      }
+
+      if (!sessionUser || sessionUser.role !== 'mentor' || !sessionUser.userId) {
+        window.location.href = 'account.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/questionnaire/assigned-view?role=mentor&userId=${encodeURIComponent(sessionUser.userId)}`);
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          clearSummary();
+          const backendError = safeText(payload.error);
+          renderMessage(backendError || 'Failed to load assigned students.');
+          return;
+        }
+
+        const rows = Array.isArray(payload.rows) ? payload.rows : [];
+        if (!rows.length) {
+          clearSummary();
+          renderMessage('No students are currently assigned to you.');
+          return;
+        }
+
+        updateSummary(rows);
+        renderRows(rows);
+      } catch (_) {
+        clearSummary();
+        renderMessage('Could not reach server.');
+      }
+    }
+
+    loadMentorAssignments();
+  </script>
 
 </body>
 </html>

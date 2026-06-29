@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Tuliza - Psychiatrist Profile</title><link rel="stylesheet" href="styles.css" /></head>
+<body>
+  <main class="auth-main fade-up"><section class="auth-hero-card"><span class="match-eyebrow">Psychiatrist profile</span><h1>Complete your psychiatrist profile</h1></section>
+    <section class="auth-card" style="margin-top:20px;"><form id="profile-form">
+      <div class="form-group"><label class="form-label" for="fullName">Full name</label><input id="fullName" class="form-input" required /></div>
+      <div class="form-group"><label class="form-label" for="phoneNo">Phone number</label><input id="phoneNo" class="form-input" type="number" /></div>
+      <div class="form-group"><label class="form-label" for="certification">Certification</label><input id="certification" class="form-input" /></div>
+      <div class="form-group"><label class="form-label" for="licenceNumber">Licence number</label><input id="licenceNumber" class="form-input" type="text" /></div>
+      <div class="form-group"><label class="form-label" for="yearsOfExperience">Years of experience</label><input id="yearsOfExperience" class="form-input" type="number" /></div>
+      <div class="form-group"><label class="form-label" for="billingDetails">Billing details</label><input id="billingDetails" class="form-input" /></div>
+      <p id="msg" class="role-help-text"></p><button class="btn-primary" type="submit">Save profile</button>
+    </form></section></main>
+  <script>
+    const form = document.getElementById('profile-form');
+    const msg = document.getElementById('msg');
+    const sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+    if (!sessionUser || sessionUser.role !== 'psychiatrist' || !sessionUser.signupId) window.location.href = 'account.html';
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        role: 'psychiatrist',
+        signupId: sessionUser.signupId,
+        fullName: document.getElementById('fullName').value.trim(),
+        phoneNo: document.getElementById('phoneNo').value.trim(),
+        certification: document.getElementById('certification').value.trim(),
+        licenceNumber: document.getElementById('licenceNumber').value.trim(),
+        yearsOfExperience: document.getElementById('yearsOfExperience').value.trim(),
+        billingDetails: document.getElementById('billingDetails').value.trim(),
+      };
+      const res = await fetch('/api/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.textContent = data.error || 'Failed to save profile'; return; }
+      sessionStorage.setItem('tuliza_session_user', JSON.stringify({ ...sessionUser, userId: data.userId, role: data.role, signupId: data.signupId }));
+      window.location.href = data.redirectTo || 'psychologist.html';
+    });
+  </script>
+</body>
+</html>
