@@ -1467,6 +1467,146 @@ a:hover { color: var(--coral-deep); }
   color: var(--muted);
 }
 
+.appointment-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 210;
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 14px 20px;
+  font-family: 'Syne', sans-serif;
+  font-size: var(--text-sm);
+  letter-spacing: 0.4px;
+  color: white;
+  background: linear-gradient(120deg, var(--coral), #ff6a4f 45%, #ff9b7b);
+  box-shadow: 0 16px 32px rgba(255, 106, 79, 0.34);
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.appointment-fab:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 20px 34px rgba(255, 106, 79, 0.44);
+}
+
+.appointment-overlay {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding-top: 62px;
+}
+
+.appointment-modal {
+  max-width: 900px;
+}
+
+.appointment-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.appointment-legend {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.appointment-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.slot-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.slot-dot-available {
+  background: #27a844;
+}
+
+.slot-dot-taken {
+  background: #9aa3b9;
+}
+
+.appointment-calendar {
+  max-height: 430px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.appointment-day-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--cream-2);
+  padding: 12px;
+}
+
+.appointment-day-card h3 {
+  margin: 0 0 10px;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+
+.slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.slot-chip {
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-strong);
+  background: white;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.slot-chip.is-available {
+  border-color: rgba(40, 167, 69, 0.42);
+  color: #19692c;
+  background: #f2fff5;
+}
+
+.slot-chip.is-available:hover {
+  transform: translateY(-1px);
+}
+
+.slot-chip.is-unavailable {
+  border-color: rgba(168, 178, 200, 0.95);
+  background: #eef1f8;
+  color: #6f7b95;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.appointment-feedback {
+  margin-top: 12px;
+  margin-bottom: 0;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.appointment-empty {
+  margin: 8px 0;
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+}
+
 @media (max-width: 980px) {
   .role-kpi-grid,
   .role-stats {
@@ -1487,6 +1627,16 @@ a:hover { color: var(--coral-deep); }
   .role-main { padding: 14px; }
   .role-hero { padding: 18px; }
   .role-panel { padding: 14px; }
+  .appointment-controls,
+  .appointment-calendar,
+  .slot-grid {
+    grid-template-columns: 1fr;
+  }
+  .appointment-fab {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
   .role-list-item {
     flex-direction: column;
     align-items: flex-start;

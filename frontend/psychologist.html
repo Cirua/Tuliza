@@ -122,6 +122,17 @@
           <textarea class="form-textarea" placeholder="Observations, intervention used, treatment plan..."></textarea>
           <button class="btn-primary" type="button" style="margin-top:12px;">Save clinical note</button>
         </article>
+        <article class="role-panel">
+          <div class="role-panel-head">
+            <h3>Booked appointments</h3>
+            <button id="refreshPsychBookings" class="btn-ghost-modal" type="button">Refresh</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="psychTherapistId">Psychologist ID</label>
+            <input id="psychTherapistId" class="form-input" type="number" min="1" value="1" />
+          </div>
+          <ul id="psychAppointmentsList" class="role-list"></ul>
+        </article>
       </aside>
     </section>
   </main>
@@ -129,6 +140,66 @@
   <script>
     const storedMood = localStorage.getItem('tuliza_dashboard_mood') || 'calm';
     document.body.setAttribute('data-mood', storedMood);
+
+    const psychTherapistId = document.getElementById('psychTherapistId');
+    const psychAppointmentsList = document.getElementById('psychAppointmentsList');
+    const refreshPsychBookings = document.getElementById('refreshPsychBookings');
+
+    async function autoResolvePsychologistId() {
+      try {
+        const sessionRaw = localStorage.getItem('tuliza_session_user');
+        if (!sessionRaw) return false;
+
+        const session = JSON.parse(sessionRaw);
+        if (!session || session.role !== 'psychiatrist' || !session.alias) return false;
+
+        const response = await fetch(`/api/users/resolve-id?role=psychiatrist&identifier=${encodeURIComponent(session.alias)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.userId) return false;
+
+        psychTherapistId.value = String(payload.userId);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function loadPsychologistBookings() {
+      const therapistId = Number(psychTherapistId.value);
+      if (!therapistId) {
+        psychAppointmentsList.innerHTML = '<li>Enter a valid psychologist ID (or login from Account page to auto-detect).</li>';
+        return;
+      }
+
+      psychAppointmentsList.innerHTML = '<li>Loading booked appointments...</li>';
+      try {
+        const response = await fetch(`/api/appointments/booked?therapistType=psychiatrist&therapistId=${encodeURIComponent(String(therapistId))}&days=30`);
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load booked appointments.');
+        }
+
+        if (!result.appointments.length) {
+          psychAppointmentsList.innerHTML = '<li>No upcoming booked appointments.</li>';
+          return;
+        }
+
+        psychAppointmentsList.innerHTML = result.appointments.map((appt) => {
+          const start = new Date(appt.slotStart).toLocaleString();
+          return `<li><strong>${appt.studentName}</strong> (${appt.studentId}) - ${start}</li>`;
+        }).join('');
+      } catch (err) {
+        psychAppointmentsList.innerHTML = `<li>${err.message || 'Could not load appointments.'}</li>`;
+      }
+    }
+
+    refreshPsychBookings.addEventListener('click', loadPsychologistBookings);
+    psychTherapistId.addEventListener('change', loadPsychologistBookings);
+
+    (async () => {
+      await autoResolvePsychologistId();
+      loadPsychologistBookings();
+    })();
   </script>
 </body>
 </html>

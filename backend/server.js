@@ -7,6 +7,7 @@ const { Pool } = require('pg')
 
 const app = express()
 const projectRoot = path.resolve(__dirname, '..')
+app.use(express.json())
 
 const allowedOrigins = new Set(
   (process.env.TULIZA_ALLOWED_ORIGINS || '')
@@ -46,6 +47,126 @@ function toIsoString(value) {
   return dateValue.toISOString()
 }
 
+function normalizeTherapistType(value) {
+  const normalized = String(value || '').trim().toLowerCase()
+  if (normalized === 'psychologist') return 'psychiatrist'
+  if (normalized === 'mentor' || normalized === 'psychiatrist') return normalized
+  return ''
+}
+
+function toUtcDateFloor(dateInput) {
+  const date = new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return null
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0))
+}
+
+function parsePositiveInt(value) {
+  const parsed = Number.parseInt(String(value), 10)
+  if (Number.isNaN(parsed) || parsed <= 0) return null
+  return parsed
+}
+
+function canMutateAppointmentDate(dateInput) {
+  const slotDay = toUtcDateFloor(dateInput)
+  if (!slotDay) return false
+  const today = toUtcDateFloor(new Date())
+  return slotDay >= today
+}
+
+function getWorkingWindowForDate(dateInput) {
+  const date = new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return null
+
+  const day = date.getUTCDay()
+  if (day === 0) {
+    return null // Sunday: closed
+  }
+  if (day === 6) {
+    return { startMinutes: 9 * 60, endMinutes: 12 * 60 } // Saturday: 09:00-12:00
+  }
+  return { startMinutes: 8 * 60, endMinutes: 17 * 60 } // Monday-Friday: 08:00-17:00
+}
+
+function toUtcMinutes(dateInput) {
+  const date = new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return null
+  return (date.getUTCHours() * 60) + date.getUTCMinutes()
+}
+
+function isWithinWorkingHours(startAt, endAt) {
+  const start = new Date(startAt)
+  const end = new Date(endAt)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    return false
+  }
+
+  // Appointments must start and end on the same UTC calendar day.
+  if (
+    start.getUTCFullYear() !== end.getUTCFullYear()
+    || start.getUTCMonth() !== end.getUTCMonth()
+    || start.getUTCDate() !== end.getUTCDate()
+  ) {
+    return false
+  }
+
+  const window = getWorkingWindowForDate(start)
+  if (!window) return false
+
+  const startMinutes = toUtcMinutes(start)
+  const endMinutes = toUtcMinutes(end)
+  if (startMinutes == null || endMinutes == null) return false
+
+  return startMinutes >= window.startMinutes && endMinutes <= window.endMinutes
+}
+
+async function createGoogleCalendarEvent({ summary, description, startAt, endAt }) {
+  const enabled = String(process.env.GOOGLE_CALENDAR_SYNC_ENABLED || '').toLowerCase() === 'true'
+  if (!enabled) {
+    return { eventId: null, syncStatus: 'not_configured', syncError: null }
+  }
+
+  const calendarId = process.env.GOOGLE_CALENDAR_ID
+  const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH
+  if (!calendarId || !serviceAccountPath) {
+    return {
+      eventId: null,
+      syncStatus: 'failed',
+      syncError: 'Missing GOOGLE_CALENDAR_ID or GOOGLE_SERVICE_ACCOUNT_KEY_PATH',
+    }
+  }
+
+  try {
+    const { google } = require('googleapis')
+    const auth = new google.auth.GoogleAuth({
+      keyFile: serviceAccountPath,
+      scopes: ['https://www.googleapis.com/auth/calendar'],
+    })
+
+    const calendar = google.calendar({ version: 'v3', auth })
+    const response = await calendar.events.insert({
+      calendarId,
+      requestBody: {
+        summary,
+        description,
+        start: { dateTime: new Date(startAt).toISOString() },
+        end: { dateTime: new Date(endAt).toISOString() },
+      },
+    })
+
+    return {
+      eventId: response.data?.id || null,
+      syncStatus: response.data?.id ? 'synced' : 'failed',
+      syncError: response.data?.id ? null : 'Google Calendar did not return an event id',
+    }
+  } catch (err) {
+    return {
+      eventId: null,
+      syncStatus: 'failed',
+      syncError: err?.message || 'Google Calendar sync failed',
+    }
+  }
+}
+
 const frontendPages = new Set([
   'tuliza-frontend.html',
   'chat-ui.html',
@@ -53,6 +174,9 @@ const frontendPages = new Set([
   'resource-detail.html',
   'journal.html',
   'account.html',
+  'mentor.html',
+  'psychologist.html',
+  'admin.html',
 ])
 
 /* Serve static files from the root directory */
@@ -86,6 +210,486 @@ app.get('/frontend/:page', (req, res, next) => {
 /* Route to indicate chat server is running */
 app.get('/server', (req, res) => {
   res.send('Chat server running')
+})
+
+app.get('/api/users/resolve-id', async (req, res) => {
+  const role = normalizeRole(req.query.role)
+  const identifier = String(req.query.identifier || '').trim()
+
+  if (!identifier || (role !== 'student' && role !== 'mentor' && role !== 'psychiatrist')) {
+    res.status(400).json({ error: 'role (student|mentor|psychiatrist) and identifier are required.' })
+    return
+  }
+
+  try {
+    if (role === 'student') {
+      const result = await dbPool.query(
+        `
+        SELECT students_id AS id
+        FROM students
+        WHERE LOWER(email) = LOWER($1)
+           OR LOWER(username) = LOWER($1)
+        LIMIT 1
+        `,
+        [identifier]
+      )
+
+      if (!result.rows.length) {
+        res.status(404).json({ error: 'No student record matches this account.' })
+        return
+      }
+
+      res.json({ role: 'student', userId: Number(result.rows[0].id) })
+      return
+    }
+
+    if (role === 'mentor') {
+      const result = await dbPool.query(
+        `
+        SELECT mentors_id AS id
+        FROM mentors
+        WHERE LOWER(email) = LOWER($1)
+           OR LOWER(full_name) = LOWER($1)
+        LIMIT 1
+        `,
+        [identifier]
+      )
+
+      if (!result.rows.length) {
+        res.status(404).json({ error: 'No mentor record matches this account.' })
+        return
+      }
+
+      res.json({ role: 'mentor', userId: Number(result.rows[0].id) })
+      return
+    }
+
+    const result = await dbPool.query(
+      `
+      SELECT psychiatrists_id AS id
+      FROM psychiatrists
+      WHERE LOWER(email) = LOWER($1)
+         OR LOWER(full_name) = LOWER($1)
+      LIMIT 1
+      `,
+      [identifier]
+    )
+
+    if (!result.rows.length) {
+      res.status(404).json({ error: 'No psychologist record matches this account.' })
+      return
+    }
+
+    res.json({ role: 'psychiatrist', userId: Number(result.rows[0].id) })
+  } catch (err) {
+    console.error('Failed to resolve user id:', err.message)
+    res.status(500).json({ error: 'Could not resolve user ID.' })
+  }
+})
+
+app.get('/api/therapists', async (req, res) => {
+  const type = normalizeTherapistType(req.query.type)
+  if (!type) {
+    res.status(400).json({ error: 'type (mentor|psychiatrist) is required.' })
+    return
+  }
+
+  try {
+    if (type === 'mentor') {
+      const result = await dbPool.query(
+        `
+        SELECT mentors_id AS therapist_id, full_name AS display_name
+        FROM mentors
+        ORDER BY mentors_id ASC
+        `
+      )
+
+      res.json({
+        type,
+        therapists: result.rows.map((row) => ({
+          therapistId: Number(row.therapist_id),
+          displayName: row.display_name || `Mentor ${row.therapist_id}`,
+        })),
+      })
+      return
+    }
+
+    const result = await dbPool.query(
+      `
+      SELECT psychiatrists_id AS therapist_id, full_name AS display_name
+      FROM psychiatrists
+      ORDER BY psychiatrists_id ASC
+      `
+    )
+
+    res.json({
+      type,
+      therapists: result.rows.map((row) => ({
+        therapistId: Number(row.therapist_id),
+        displayName: row.display_name || `Psychologist ${row.therapist_id}`,
+      })),
+    })
+  } catch (err) {
+    console.error('Failed to load therapists:', err.message)
+    res.status(500).json({ error: 'Failed to load therapists.' })
+  }
+})
+
+app.get('/api/appointments/availability', async (req, res) => {
+  const therapistType = normalizeTherapistType(req.query.therapistType)
+  const therapistId = parsePositiveInt(req.query.therapistId)
+  const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : new Date()
+  const days = Math.min(parsePositiveInt(req.query.days) || 14, 31)
+
+  if (!therapistType || !therapistId) {
+    res.status(400).json({ error: 'therapistType and therapistId are required.' })
+    return
+  }
+
+  const startDateFloor = toUtcDateFloor(startDate)
+  if (!startDateFloor) {
+    res.status(400).json({ error: 'Invalid startDate.' })
+    return
+  }
+
+  const todayFloor = toUtcDateFloor(new Date())
+  const effectiveStart = startDateFloor < todayFloor ? todayFloor : startDateFloor
+  const endDate = new Date(effectiveStart)
+  endDate.setUTCDate(endDate.getUTCDate() + days)
+
+  try {
+    const availabilityRows = await dbPool.query(
+      `
+      SELECT
+        availability_id,
+        start_at,
+        end_at,
+        is_available
+      FROM therapist_availability
+      WHERE therapist_type = $1
+        AND therapist_id = $2
+        AND start_at >= $3
+        AND start_at < $4
+      ORDER BY start_at ASC
+      `,
+      [therapistType, therapistId, effectiveStart.toISOString(), endDate.toISOString()]
+    )
+
+    const bookedRows = await dbPool.query(
+      `
+      SELECT availability_id
+      FROM appointments
+      WHERE therapist_type = $1
+        AND therapist_id = $2
+        AND slot_start >= $3
+        AND slot_start < $4
+        AND status = 'booked'
+      `,
+      [therapistType, therapistId, effectiveStart.toISOString(), endDate.toISOString()]
+    )
+
+    const bookedIds = new Set(bookedRows.rows.map((row) => Number(row.availability_id)))
+    const slots = availabilityRows.rows.map((row) => {
+      if (!isWithinWorkingHours(row.start_at, row.end_at)) {
+        return null
+      }
+
+      const availableFlag = Boolean(row.is_available) && !bookedIds.has(Number(row.availability_id))
+      return {
+        availabilityId: Number(row.availability_id),
+        startAt: toIsoString(row.start_at),
+        endAt: toIsoString(row.end_at),
+        status: availableFlag ? 'available' : 'unavailable',
+      }
+    }).filter(Boolean)
+
+    res.json({
+      therapistType,
+      therapistId,
+      range: {
+        from: effectiveStart.toISOString(),
+        to: endDate.toISOString(),
+      },
+      slots,
+    })
+  } catch (err) {
+    console.error('Failed to load therapist availability:', err.message)
+    res.status(500).json({ error: 'Failed to load therapist availability.' })
+  }
+})
+
+app.post('/api/appointments/availability', async (req, res) => {
+  const therapistType = normalizeTherapistType(req.body?.therapistType)
+  const therapistId = parsePositiveInt(req.body?.therapistId)
+  const slots = Array.isArray(req.body?.slots) ? req.body.slots : []
+
+  if (!therapistType || !therapistId || slots.length === 0) {
+    res.status(400).json({ error: 'therapistType, therapistId, and at least one slot are required.' })
+    return
+  }
+
+  const normalizedSlots = []
+  for (const slot of slots) {
+    const startAt = new Date(slot?.startAt)
+    const endAt = new Date(slot?.endAt)
+    const isAvailable = slot?.isAvailable !== false
+
+    if (Number.isNaN(startAt.getTime()) || Number.isNaN(endAt.getTime()) || endAt <= startAt) {
+      res.status(400).json({ error: 'Each slot must include valid startAt and endAt values.' })
+      return
+    }
+
+    if (!canMutateAppointmentDate(startAt)) {
+      res.status(400).json({ error: 'Only upcoming days can be updated for availability.' })
+      return
+    }
+
+    if (!isWithinWorkingHours(startAt, endAt)) {
+      res.status(400).json({ error: 'Working hours are Monday-Friday 08:00-17:00, Saturday 09:00-12:00, Sunday closed.' })
+      return
+    }
+
+    normalizedSlots.push({
+      startAt: startAt.toISOString(),
+      endAt: endAt.toISOString(),
+      isAvailable,
+    })
+  }
+
+  const client = await dbPool.connect()
+  try {
+    await client.query('BEGIN')
+
+    for (const slot of normalizedSlots) {
+      await client.query(
+        `
+        INSERT INTO therapist_availability (
+          therapist_type,
+          therapist_id,
+          start_at,
+          end_at,
+          is_available,
+          updated_at
+        )
+        VALUES ($1, $2, $3, $4, $5, NOW())
+        ON CONFLICT (therapist_type, therapist_id, start_at, end_at)
+        DO UPDATE
+        SET is_available = EXCLUDED.is_available,
+            updated_at = NOW()
+        `,
+        [therapistType, therapistId, slot.startAt, slot.endAt, slot.isAvailable]
+      )
+    }
+
+    await client.query('COMMIT')
+    res.status(201).json({
+      therapistType,
+      therapistId,
+      updatedSlots: normalizedSlots.length,
+    })
+  } catch (err) {
+    await client.query('ROLLBACK')
+    console.error('Failed to update availability:', err.message)
+    res.status(500).json({ error: 'Failed to update therapist availability.' })
+  } finally {
+    client.release()
+  }
+})
+
+app.post('/api/appointments', async (req, res) => {
+  const studentId = parsePositiveInt(req.body?.studentId)
+  const therapistType = normalizeTherapistType(req.body?.therapistType)
+  const therapistId = parsePositiveInt(req.body?.therapistId)
+  const availabilityId = parsePositiveInt(req.body?.availabilityId)
+  const note = String(req.body?.note || '').slice(0, 500)
+
+  if (!studentId || !therapistType || !therapistId || !availabilityId) {
+    res.status(400).json({ error: 'studentId, therapistType, therapistId, and availabilityId are required.' })
+    return
+  }
+
+  const client = await dbPool.connect()
+  try {
+    await client.query('BEGIN')
+
+    const availabilityResult = await client.query(
+      `
+      SELECT availability_id, start_at, end_at, is_available
+      FROM therapist_availability
+      WHERE availability_id = $1
+        AND therapist_type = $2
+        AND therapist_id = $3
+      FOR UPDATE
+      `,
+      [availabilityId, therapistType, therapistId]
+    )
+
+    if (availabilityResult.rows.length === 0) {
+      await client.query('ROLLBACK')
+      res.status(404).json({ error: 'Selected slot was not found.' })
+      return
+    }
+
+    const slot = availabilityResult.rows[0]
+    if (!canMutateAppointmentDate(slot.start_at)) {
+      await client.query('ROLLBACK')
+      res.status(400).json({ error: 'Past-day slots cannot be booked or updated.' })
+      return
+    }
+
+    if (!isWithinWorkingHours(slot.start_at, slot.end_at)) {
+      await client.query('ROLLBACK')
+      res.status(400).json({ error: 'This slot is outside therapist working hours.' })
+      return
+    }
+
+    if (!slot.is_available) {
+      await client.query('ROLLBACK')
+      res.status(409).json({ error: 'This slot is no longer available.' })
+      return
+    }
+
+    const existingAppointment = await client.query(
+      `
+      SELECT appointment_id
+      FROM appointments
+      WHERE availability_id = $1
+        AND status = 'booked'
+      FOR UPDATE
+      `,
+      [availabilityId]
+    )
+
+    if (existingAppointment.rows.length > 0) {
+      await client.query('ROLLBACK')
+      res.status(409).json({ error: 'This slot has already been booked.' })
+      return
+    }
+
+    const appointmentInsert = await client.query(
+      `
+      INSERT INTO appointments (
+        students_id,
+        therapist_type,
+        therapist_id,
+        availability_id,
+        slot_start,
+        slot_end,
+        status,
+        note
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'booked', $7)
+      RETURNING appointment_id, slot_start, slot_end
+      `,
+      [studentId, therapistType, therapistId, availabilityId, slot.start_at, slot.end_at, note || null]
+    )
+
+    await client.query(
+      `
+      UPDATE therapist_availability
+      SET is_available = FALSE,
+          updated_at = NOW()
+      WHERE availability_id = $1
+      `,
+      [availabilityId]
+    )
+
+    const appointment = appointmentInsert.rows[0]
+    const googleSync = await createGoogleCalendarEvent({
+      summary: `Tuliza Appointment (${therapistType})`,
+      description: `Student ${studentId} booked with ${therapistType} ${therapistId}`,
+      startAt: appointment.slot_start,
+      endAt: appointment.slot_end,
+    })
+
+    await client.query(
+      `
+      UPDATE appointments
+      SET google_event_id = $2,
+          google_sync_status = $3,
+          google_sync_error = $4,
+          updated_at = NOW()
+      WHERE appointment_id = $1
+      `,
+      [appointment.appointment_id, googleSync.eventId, googleSync.syncStatus, googleSync.syncError]
+    )
+
+    await client.query('COMMIT')
+
+    res.status(201).json({
+      appointmentId: Number(appointment.appointment_id),
+      slotStart: toIsoString(appointment.slot_start),
+      slotEnd: toIsoString(appointment.slot_end),
+      googleCalendar: {
+        status: googleSync.syncStatus,
+        eventId: googleSync.eventId,
+        error: googleSync.syncError,
+      },
+    })
+  } catch (err) {
+    await client.query('ROLLBACK')
+    console.error('Failed to book appointment:', err.message)
+    res.status(500).json({ error: 'Failed to book appointment.' })
+  } finally {
+    client.release()
+  }
+})
+
+app.get('/api/appointments/booked', async (req, res) => {
+  const therapistType = normalizeTherapistType(req.query.therapistType)
+  const therapistId = parsePositiveInt(req.query.therapistId)
+  const days = Math.min(parsePositiveInt(req.query.days) || 30, 90)
+
+  if (!therapistType || !therapistId) {
+    res.status(400).json({ error: 'therapistType and therapistId are required.' })
+    return
+  }
+
+  const startDate = toUtcDateFloor(new Date())
+  const endDate = new Date(startDate)
+  endDate.setUTCDate(endDate.getUTCDate() + days)
+
+  try {
+    const result = await dbPool.query(
+      `
+      SELECT
+        a.appointment_id,
+        a.students_id,
+        s.username AS student_name,
+        a.slot_start,
+        a.slot_end,
+        a.status,
+        a.note
+      FROM appointments a
+      LEFT JOIN students s ON s.students_id = a.students_id
+      WHERE a.therapist_type = $1
+        AND a.therapist_id = $2
+        AND a.slot_start >= $3
+        AND a.slot_start < $4
+      ORDER BY a.slot_start ASC
+      `,
+      [therapistType, therapistId, startDate.toISOString(), endDate.toISOString()]
+    )
+
+    const appointments = result.rows.map((row) => ({
+      appointmentId: Number(row.appointment_id),
+      studentId: Number(row.students_id),
+      studentName: row.student_name || `Student ${row.students_id}`,
+      slotStart: toIsoString(row.slot_start),
+      slotEnd: toIsoString(row.slot_end),
+      status: row.status,
+      note: row.note,
+    }))
+
+    res.json({
+      therapistType,
+      therapistId,
+      appointments,
+    })
+  } catch (err) {
+    console.error('Failed to load booked appointments:', err.message)
+    res.status(500).json({ error: 'Failed to load booked appointments.' })
+  }
 })
 
 /* Create an HTTP server with Express app */

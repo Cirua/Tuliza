@@ -123,6 +123,17 @@
           <textarea class="form-textarea" placeholder="Write session highlights and next steps..."></textarea>
           <button class="btn-primary" type="button" style="margin-top:12px;">Save note</button>
         </article>
+        <article class="role-panel">
+          <div class="role-panel-head">
+            <h3>Booked appointments</h3>
+            <button id="refreshMentorBookings" class="btn-ghost-modal" type="button">Refresh</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="mentorTherapistId">Mentor ID</label>
+            <input id="mentorTherapistId" class="form-input" type="number" min="1" value="1" />
+          </div>
+          <ul id="mentorAppointmentsList" class="role-list"></ul>
+        </article>
       </aside>
     </section>
   </main>
@@ -130,6 +141,66 @@
   <script>
     const storedMood = localStorage.getItem('tuliza_dashboard_mood') || 'calm';
     document.body.setAttribute('data-mood', storedMood);
+
+    const mentorTherapistId = document.getElementById('mentorTherapistId');
+    const mentorAppointmentsList = document.getElementById('mentorAppointmentsList');
+    const refreshMentorBookings = document.getElementById('refreshMentorBookings');
+
+    async function autoResolveMentorId() {
+      try {
+        const sessionRaw = localStorage.getItem('tuliza_session_user');
+        if (!sessionRaw) return false;
+
+        const session = JSON.parse(sessionRaw);
+        if (!session || session.role !== 'mentor' || !session.alias) return false;
+
+        const response = await fetch(`/api/users/resolve-id?role=mentor&identifier=${encodeURIComponent(session.alias)}`);
+        const payload = await response.json();
+        if (!response.ok || !payload.userId) return false;
+
+        mentorTherapistId.value = String(payload.userId);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function loadMentorBookings() {
+      const therapistId = Number(mentorTherapistId.value);
+      if (!therapistId) {
+        mentorAppointmentsList.innerHTML = '<li>Enter a valid mentor ID (or login from Account page to auto-detect).</li>';
+        return;
+      }
+
+      mentorAppointmentsList.innerHTML = '<li>Loading booked appointments...</li>';
+      try {
+        const response = await fetch(`/api/appointments/booked?therapistType=mentor&therapistId=${encodeURIComponent(String(therapistId))}&days=30`);
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load booked appointments.');
+        }
+
+        if (!result.appointments.length) {
+          mentorAppointmentsList.innerHTML = '<li>No upcoming booked appointments.</li>';
+          return;
+        }
+
+        mentorAppointmentsList.innerHTML = result.appointments.map((appt) => {
+          const start = new Date(appt.slotStart).toLocaleString();
+          return `<li><strong>${appt.studentName}</strong> (${appt.studentId}) - ${start}</li>`;
+        }).join('');
+      } catch (err) {
+        mentorAppointmentsList.innerHTML = `<li>${err.message || 'Could not load appointments.'}</li>`;
+      }
+    }
+
+    refreshMentorBookings.addEventListener('click', loadMentorBookings);
+    mentorTherapistId.addEventListener('change', loadMentorBookings);
+
+    (async () => {
+      await autoResolveMentorId();
+      loadMentorBookings();
+    })();
   </script>
 </body>
 </html>
