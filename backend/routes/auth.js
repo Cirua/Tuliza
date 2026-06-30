@@ -50,6 +50,89 @@ function isStrongPassword(password) {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).{7,}$/.test(String(password || ''))
 }
 
+function parsePositiveInt(value) {
+  const parsed = Number(value)
+  if (!Number.isInteger(parsed) || parsed <= 0) return null
+  return parsed
+}
+
+function normalizeTherapistType(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+
+  if (normalized === 'mentor') return 'mentor'
+  if (normalized === 'psychiatrist' || normalized === 'psychologist') return 'psychiatrist'
+  return null
+}
+
+function toUtcDateFloor(dateInput) {
+  const date = new Date(dateInput)
+  if (Number.isNaN(date.getTime())) return null
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0))
+}
+
+function toIsoString(value) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+  return date.toISOString()
+}
+
+function isWithinWorkingHours(startAt, endAt) {
+  const start = new Date(startAt)
+  const end = new Date(endAt)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false
+  if (end <= start) return false
+
+  const startDay = start.getUTCDay()
+  const endDay = end.getUTCDay()
+  if (startDay !== endDay) return false
+  if (startDay === 0) return false
+
+  const startMinutes = (start.getUTCHours() * 60) + start.getUTCMinutes()
+  const endMinutes = (end.getUTCHours() * 60) + end.getUTCMinutes()
+
+  if (startDay === 6) {
+    return startMinutes >= 9 * 60 && endMinutes <= 12 * 60
+  }
+
+  return startMinutes >= 8 * 60 && endMinutes <= 17 * 60
+}
+
+async function ensureAppointmentSchema(dbPool) {
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS therapist_availability (
+      availability_id SERIAL PRIMARY KEY,
+      therapist_type VARCHAR(30) NOT NULL,
+      therapist_id INT NOT NULL,
+      start_at TIMESTAMPTZ NOT NULL,
+      end_at TIMESTAMPTZ NOT NULL,
+      is_available BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS appointments (
+      appointment_id SERIAL PRIMARY KEY,
+      student_id INT NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+      therapist_type VARCHAR(30) NOT NULL,
+      therapist_id INT NOT NULL,
+      availability_id INT NOT NULL REFERENCES therapist_availability(availability_id) ON DELETE CASCADE,
+      slot_start TIMESTAMPTZ NOT NULL,
+      slot_end TIMESTAMPTZ NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'booked',
+      note TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_therapist_availability_lookup ON therapist_availability(therapist_type, therapist_id, start_at)')
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_appointments_lookup ON appointments(therapist_type, therapist_id, slot_start)')
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_appointments_availability ON appointments(availability_id)')
+}
+
 function normalizeAnswer(value) {
   return String(value || '')
     .trim()
@@ -463,6 +546,364 @@ async function resolveOrRepairRoleProfileRow(dbPool, { role, table, userIdCol, s
 }
 
 function setupAuthRoutes(app, dbPool) {
+  app.get('/api/users/resolve-id', async (req, res) => {
+    try {
+      const role = sanitizeRole(req.query.role)
+      const identifier = String(req.query.identifier || '').trim()
+      if (!role || !identifier) {
+        return res.status(400).json({ error: 'role and identifier are required.' })
+      }
+
+      if (role === 'student') {
+        const student = await dbPool.query(
+          `
+          SELECT student_id
+          FROM student
+          WHERE username = $1
+             OR LOWER(email) = LOWER($1)
+             OR student_id::text = $1
+             OR signup_id::text = $1
+          ORDER BY student_id ASC
+          LIMIT 1
+          `,
+          [identifier]
+        )
+
+        return res.json({ userId: student.rows[0] ? Number(student.rows[0].student_id) : null })
+      }
+
+      if (role === 'mentor') {
+        const mentor = await dbPool.query(
+          `
+          SELECT mentor_id
+          FROM mentor
+          WHERE LOWER(full_name) = LOWER($1)
+             OR LOWER(email) = LOWER($1)
+             OR mentor_id::text = $1
+             OR signup_id::text = $1
+          ORDER BY mentor_id ASC
+          LIMIT 1
+          `,
+          [identifier]
+        )
+
+        return res.json({ userId: mentor.rows[0] ? Number(mentor.rows[0].mentor_id) : null })
+      }
+
+      if (role === 'psychiatrist') {
+        const psychiatrist = await dbPool.query(
+          `
+          SELECT psychiatrist_id
+          FROM psychiatrist
+          WHERE LOWER(full_name) = LOWER($1)
+             OR LOWER(email) = LOWER($1)
+             OR psychiatrist_id::text = $1
+             OR signup_id::text = $1
+          ORDER BY psychiatrist_id ASC
+          LIMIT 1
+          `,
+          [identifier]
+        )
+
+        return res.json({ userId: psychiatrist.rows[0] ? Number(psychiatrist.rows[0].psychiatrist_id) : null })
+      }
+
+      return res.status(400).json({ error: 'Unsupported role for ID lookup.' })
+    } catch (err) {
+      console.error('Failed to resolve user ID:', err.message)
+      return res.status(500).json({ error: 'Could not resolve user ID.' })
+    }
+  })
+
+  app.get('/api/therapists', async (req, res) => {
+    try {
+      const therapistType = normalizeTherapistType(req.query.type)
+      if (!therapistType) {
+        return res.status(400).json({ error: 'Valid therapist type is required.' })
+      }
+
+      if (therapistType === 'mentor') {
+        const result = await dbPool.query(
+          `
+          SELECT mentor_id AS therapist_id,
+                 COALESCE(NULLIF(full_name, ''), email, 'Mentor') AS display_name
+          FROM mentor
+          ORDER BY mentor_id ASC
+          `
+        )
+
+        return res.json({
+          therapists: result.rows.map((row) => ({
+            therapistId: Number(row.therapist_id),
+            displayName: String(row.display_name || 'Mentor'),
+          })),
+        })
+      }
+
+      const result = await dbPool.query(
+        `
+        SELECT psychiatrist_id AS therapist_id,
+               COALESCE(NULLIF(full_name, ''), email, 'Psychologist') AS display_name
+        FROM psychiatrist
+        ORDER BY psychiatrist_id ASC
+        `
+      )
+
+      return res.json({
+        therapists: result.rows.map((row) => ({
+          therapistId: Number(row.therapist_id),
+          displayName: String(row.display_name || 'Psychologist'),
+        })),
+      })
+    } catch (err) {
+      console.error('Failed to load therapists:', err.message)
+      return res.status(500).json({ error: 'Could not load therapists.' })
+    }
+  })
+
+  app.get('/api/appointments/availability', async (req, res) => {
+    const therapistType = normalizeTherapistType(req.query.therapistType)
+    const therapistId = parsePositiveInt(req.query.therapistId)
+    const startDate = req.query.startDate ? new Date(String(req.query.startDate)) : new Date()
+    const days = Math.min(parsePositiveInt(req.query.days) || 14, 31)
+
+    if (!therapistType || !therapistId) {
+      res.status(400).json({ error: 'therapistType and therapistId are required.' })
+      return
+    }
+
+    const startDateFloor = toUtcDateFloor(startDate)
+    if (!startDateFloor) {
+      res.status(400).json({ error: 'Invalid startDate.' })
+      return
+    }
+
+    const todayFloor = toUtcDateFloor(new Date())
+    const effectiveStart = startDateFloor < todayFloor ? todayFloor : startDateFloor
+    const endDate = new Date(effectiveStart)
+    endDate.setUTCDate(endDate.getUTCDate() + days)
+
+    try {
+      await ensureAppointmentSchema(dbPool)
+
+      const availabilityRows = await dbPool.query(
+        `
+        SELECT
+          availability_id,
+          start_at,
+          end_at,
+          is_available
+        FROM therapist_availability
+        WHERE therapist_type = $1
+          AND therapist_id = $2
+          AND start_at >= $3
+          AND start_at < $4
+        ORDER BY start_at ASC
+        `,
+        [therapistType, therapistId, effectiveStart.toISOString(), endDate.toISOString()]
+      )
+
+      const bookedRows = await dbPool.query(
+        `
+        SELECT availability_id
+        FROM appointments
+        WHERE therapist_type = $1
+          AND therapist_id = $2
+          AND slot_start >= $3
+          AND slot_start < $4
+          AND status = 'booked'
+        `,
+        [therapistType, therapistId, effectiveStart.toISOString(), endDate.toISOString()]
+      )
+
+      const bookedIds = new Set(bookedRows.rows.map((row) => Number(row.availability_id)))
+      const slots = availabilityRows.rows
+        .map((row) => {
+          if (!isWithinWorkingHours(row.start_at, row.end_at)) {
+            return null
+          }
+
+          const availableFlag = Boolean(row.is_available) && !bookedIds.has(Number(row.availability_id))
+          return {
+            availabilityId: Number(row.availability_id),
+            startAt: toIsoString(row.start_at),
+            endAt: toIsoString(row.end_at),
+            status: availableFlag ? 'available' : 'unavailable',
+          }
+        })
+        .filter(Boolean)
+
+      res.json({
+        therapistType,
+        therapistId,
+        range: {
+          from: effectiveStart.toISOString(),
+          to: endDate.toISOString(),
+        },
+        slots,
+      })
+    } catch (err) {
+      console.error('Failed to load therapist availability:', err.message)
+      res.status(500).json({ error: 'Failed to load therapist availability.' })
+    }
+  })
+
+  app.post('/api/appointments', async (req, res) => {
+    const studentId = parsePositiveInt(req.body?.studentId)
+    const therapistType = normalizeTherapistType(req.body?.therapistType)
+    const therapistId = parsePositiveInt(req.body?.therapistId)
+    const availabilityId = parsePositiveInt(req.body?.availabilityId)
+    const note = String(req.body?.note || '').slice(0, 500)
+
+    if (!studentId || !therapistType || !therapistId || !availabilityId) {
+      res.status(400).json({ error: 'studentId, therapistType, therapistId, and availabilityId are required.' })
+      return
+    }
+
+    await ensureAppointmentSchema(dbPool)
+
+    const client = await dbPool.connect()
+    try {
+      await client.query('BEGIN')
+
+      const availabilityResult = await client.query(
+        `
+        SELECT availability_id, start_at, end_at, is_available
+        FROM therapist_availability
+        WHERE availability_id = $1
+          AND therapist_type = $2
+          AND therapist_id = $3
+        FOR UPDATE
+        `,
+        [availabilityId, therapistType, therapistId]
+      )
+
+      if (availabilityResult.rows.length === 0) {
+        await client.query('ROLLBACK')
+        res.status(404).json({ error: 'Selected slot was not found.' })
+        return
+      }
+
+      const slot = availabilityResult.rows[0]
+      if (!slot.is_available) {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'This slot is no longer available.' })
+        return
+      }
+
+      const existingAppointment = await client.query(
+        `
+        SELECT appointment_id
+        FROM appointments
+        WHERE availability_id = $1
+          AND status = 'booked'
+        FOR UPDATE
+        `,
+        [availabilityId]
+      )
+
+      if (existingAppointment.rows.length > 0) {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'This slot has already been booked.' })
+        return
+      }
+
+      const appointmentInsert = await client.query(
+        `
+        INSERT INTO appointments (
+          student_id,
+          therapist_type,
+          therapist_id,
+          availability_id,
+          slot_start,
+          slot_end,
+          status,
+          note
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, 'booked', $7)
+        RETURNING appointment_id, slot_start, slot_end
+        `,
+        [studentId, therapistType, therapistId, availabilityId, slot.start_at, slot.end_at, note || null]
+      )
+
+      await client.query(
+        `
+        UPDATE therapist_availability
+        SET is_available = FALSE,
+            updated_at = NOW()
+        WHERE availability_id = $1
+        `,
+        [availabilityId]
+      )
+
+      await client.query('COMMIT')
+
+      const appointment = appointmentInsert.rows[0]
+      res.status(201).json({
+        appointmentId: Number(appointment.appointment_id),
+        slotStart: toIsoString(appointment.slot_start),
+        slotEnd: toIsoString(appointment.slot_end),
+      })
+    } catch (err) {
+      await client.query('ROLLBACK')
+      console.error('Failed to book appointment:', err.message)
+      res.status(500).json({ error: 'Failed to book appointment.' })
+    } finally {
+      client.release()
+    }
+  })
+
+  app.get('/api/appointments/booked', async (req, res) => {
+    try {
+      const therapistType = normalizeTherapistType(req.query.therapistType)
+      const therapistId = parsePositiveInt(req.query.therapistId)
+      const days = Math.min(parsePositiveInt(req.query.days) || 30, 60)
+
+      if (!therapistType || !therapistId) {
+        return res.status(400).json({ error: 'therapistType and therapistId are required.' })
+      }
+
+      await ensureAppointmentSchema(dbPool)
+
+      const start = new Date()
+      const end = new Date(start)
+      end.setUTCDate(end.getUTCDate() + days)
+
+      const result = await dbPool.query(
+        `
+        SELECT
+          a.appointment_id,
+          a.student_id,
+          COALESCE(NULLIF(s.username, ''), s.email, 'Student') AS student_name,
+          a.slot_start,
+          a.slot_end
+        FROM appointments a
+        INNER JOIN student s ON s.student_id = a.student_id
+        WHERE a.therapist_type = $1
+          AND a.therapist_id = $2
+          AND a.status = 'booked'
+          AND a.slot_start >= $3
+          AND a.slot_start < $4
+        ORDER BY a.slot_start ASC
+        `,
+        [therapistType, therapistId, start.toISOString(), end.toISOString()]
+      )
+
+      return res.json({
+        appointments: result.rows.map((row) => ({
+          appointmentId: Number(row.appointment_id),
+          studentId: Number(row.student_id),
+          studentName: String(row.student_name || 'Student'),
+          slotStart: toIsoString(row.slot_start),
+          slotEnd: toIsoString(row.slot_end),
+        })),
+      })
+    } catch (err) {
+      console.error('Failed to load booked appointments:', err.message)
+      return res.status(500).json({ error: 'Failed to load booked appointments.' })
+    }
+  })
+
   app.post('/api/signup', async (req, res) => {
     try {
       const { email, password, role } = req.body || {}
