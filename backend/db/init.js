@@ -419,6 +419,38 @@ async function initializeDatabase(dbPool) {
   await dbPool.query(`
     CREATE INDEX IF NOT EXISTS idx_messages_student_psychiatrist ON messages(student_id, psychiatrist_id)
   `)
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS therapist_availability (
+      availability_id SERIAL PRIMARY KEY,
+      therapist_type VARCHAR(30) NOT NULL,
+      therapist_id INT NOT NULL,
+      start_at TIMESTAMPTZ NOT NULL,
+      end_at TIMESTAMPTZ NOT NULL,
+      is_available BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS appointments (
+      appointment_id SERIAL PRIMARY KEY,
+      student_id INT NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+      therapist_type VARCHAR(30) NOT NULL,
+      therapist_id INT NOT NULL,
+      availability_id INT NOT NULL REFERENCES therapist_availability(availability_id) ON DELETE CASCADE,
+      slot_start TIMESTAMPTZ NOT NULL,
+      slot_end TIMESTAMPTZ NOT NULL,
+      status VARCHAR(20) NOT NULL DEFAULT 'booked',
+      note TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `)
+
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_therapist_availability_lookup ON therapist_availability(therapist_type, therapist_id, start_at)')
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_appointments_lookup ON appointments(therapist_type, therapist_id, slot_start)')
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_appointments_availability ON appointments(availability_id)')
 }
 
 module.exports = { initializeDatabase }

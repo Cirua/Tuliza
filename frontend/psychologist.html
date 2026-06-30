@@ -87,6 +87,12 @@
 
       <aside class="role-stack">
         <article class="role-panel">
+          <h3>Upcoming booked appointments</h3>
+          <ul id="psych-appointments-list" class="role-list">
+            <li>Loading booked appointments...</li>
+          </ul>
+        </article>
+        <article class="role-panel">
           <h3>Risk overview</h3>
           <ul class="role-list">
             <li>2 students reported severe distress in 24h</li>
@@ -108,6 +114,7 @@
     const psychiatristKpiAssigned = document.getElementById('psy-kpi-assigned');
     const psychiatristKpiNewest = document.getElementById('psy-kpi-newest');
     const psychiatristKpiUncontacted = document.getElementById('psy-kpi-uncontacted');
+    const psychAppointmentsList = document.getElementById('psych-appointments-list');
 
     function safeText(value) {
       return String(value || '').trim() || '-';
@@ -207,7 +214,46 @@
       }
     }
 
-    loadPsychiatristAssignments();
+    async function loadPsychBookedAppointments(therapistId) {
+      if (!psychAppointmentsList) return;
+
+      try {
+        const response = await fetch(`/api/appointments/booked?therapistType=psychiatrist&therapistId=${encodeURIComponent(String(therapistId))}&days=30`);
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load booked appointments.');
+        }
+
+        if (!result.appointments.length) {
+          psychAppointmentsList.innerHTML = '<li>No upcoming booked appointments.</li>';
+          return;
+        }
+
+        psychAppointmentsList.innerHTML = result.appointments.map((appt) => {
+          const start = new Date(appt.slotStart).toLocaleString();
+          return `<li><strong>${appt.studentName}</strong> (${appt.studentId}) - ${start}</li>`;
+        }).join('');
+      } catch (err) {
+        psychAppointmentsList.innerHTML = `<li>${safeText(err.message || 'Failed to load booked appointments.')}</li>`;
+      }
+    }
+
+    (async () => {
+      await loadPsychiatristAssignments();
+
+      let sessionUser = null;
+      try {
+        sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      } catch (_) {
+        sessionUser = null;
+      }
+
+      if (sessionUser && sessionUser.role === 'psychiatrist' && sessionUser.userId) {
+        await loadPsychBookedAppointments(sessionUser.userId);
+      } else if (psychAppointmentsList) {
+        psychAppointmentsList.innerHTML = '<li>Login as a psychiatrist to view booked appointments.</li>';
+      }
+    })();
   </script>
 
 </body>

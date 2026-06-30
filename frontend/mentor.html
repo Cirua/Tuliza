@@ -87,6 +87,12 @@
 
       <aside class="role-stack">
         <article class="role-panel">
+          <h3>Upcoming booked appointments</h3>
+          <ul id="mentor-appointments-list" class="role-list">
+            <li>Loading booked appointments...</li>
+          </ul>
+        </article>
+        <article class="role-panel">
           <h3>Follow-up checklist</h3>
           <ul class="role-list">
             <li>Send coping plan to CalmOrbit_33</li>
@@ -109,6 +115,7 @@
     const mentorKpiAssigned = document.getElementById('mentor-kpi-assigned');
     const mentorKpiNewest = document.getElementById('mentor-kpi-newest');
     const mentorKpiUncontacted = document.getElementById('mentor-kpi-uncontacted');
+    const mentorAppointmentsList = document.getElementById('mentor-appointments-list');
 
     function safeText(value) {
       return String(value || '').trim() || '-';
@@ -208,7 +215,46 @@
       }
     }
 
-    loadMentorAssignments();
+    async function loadMentorBookedAppointments(therapistId) {
+      if (!mentorAppointmentsList) return;
+
+      try {
+        const response = await fetch(`/api/appointments/booked?therapistType=mentor&therapistId=${encodeURIComponent(String(therapistId))}&days=30`);
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to load booked appointments.');
+        }
+
+        if (!result.appointments.length) {
+          mentorAppointmentsList.innerHTML = '<li>No upcoming booked appointments.</li>';
+          return;
+        }
+
+        mentorAppointmentsList.innerHTML = result.appointments.map((appt) => {
+          const start = new Date(appt.slotStart).toLocaleString();
+          return `<li><strong>${appt.studentName}</strong> (${appt.studentId}) - ${start}</li>`;
+        }).join('');
+      } catch (err) {
+        mentorAppointmentsList.innerHTML = `<li>${safeText(err.message || 'Failed to load booked appointments.')}</li>`;
+      }
+    }
+
+    (async () => {
+      await loadMentorAssignments();
+
+      let sessionUser = null;
+      try {
+        sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      } catch (_) {
+        sessionUser = null;
+      }
+
+      if (sessionUser && sessionUser.role === 'mentor' && sessionUser.userId) {
+        await loadMentorBookedAppointments(sessionUser.userId);
+      } else if (mentorAppointmentsList) {
+        mentorAppointmentsList.innerHTML = '<li>Login as a mentor to view booked appointments.</li>';
+      }
+    })();
   </script>
 
 </body>
