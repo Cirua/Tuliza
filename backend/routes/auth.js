@@ -133,6 +133,22 @@ async function ensureAppointmentSchema(dbPool) {
   await dbPool.query('CREATE INDEX IF NOT EXISTS idx_appointments_availability ON appointments(availability_id)')
 }
 
+async function ensureJournalSchema(dbPool) {
+  await dbPool.query(`
+    CREATE TABLE IF NOT EXISTS journal (
+      journal_id SERIAL PRIMARY KEY,
+      student_id INT NOT NULL REFERENCES student(student_id) ON DELETE CASCADE,
+      title VARCHAR(255),
+      journal_entry TEXT NOT NULL,
+      mood VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `)
+
+  await dbPool.query('CREATE INDEX IF NOT EXISTS idx_journal_student_created ON journal(student_id, created_at DESC)')
+}
+
 function normalizeAnswer(value) {
   return String(value || '')
     .trim()
@@ -1818,6 +1834,102 @@ function setupAuthRoutes(app, dbPool) {
     } catch (err) {
       console.error('Failed to load student assigned support:', err.message)
       return res.status(500).json({ error: 'Failed to load assigned support profile' })
+    }
+  })
+
+  app.get('/api/journal', async (req, res) => {
+    try {
+      const providedStudentId = parsePositiveInt(req.query.studentId)
+      if (!providedStudentId) {
+        return res.status(400).json({ error: 'Valid studentId is required.' })
+      }
+
+      await ensureJournalSchema(dbPool)
+
+      const resolvedStudentId = await resolveStudentIdForQuestionnaire(dbPool, providedStudentId)
+      if (!resolvedStudentId) {
+        return res.status(404).json({ error: 'Student profile not found.' })
+      }
+
+      const result = await dbPool.query(
+        `
+        SELECT
+          journal_id,
+          student_id,
+          title,
+          journal_entry,
+          mood,
+          created_at,
+          updated_at
+        FROM journal
+        WHERE student_id = $1
+        ORDER BY created_at DESC
+        `,
+        [resolvedStudentId]
+      )
+
+      return res.json({
+        entries: result.rows.map((row) => ({
+          journalId: Number(row.journal_id),
+          studentId: Number(row.student_id),
+          title: row.title || 'Untitled entry',
+          journalEntry: String(row.journal_entry || ''),
+          mood: row.mood || null,
+          createdAt: toIsoString(row.created_at),
+          updatedAt: toIsoString(row.updated_at),
+        })),
+      })
+    } catch (err) {
+      console.error('Failed to load journal entries:', err.message)
+      return res.status(500).json({ error: 'Failed to load journal entries.' })
+    }
+  })
+
+  app.post('/api/journal', async (req, res) => {
+    try {
+      const providedStudentId = parsePositiveInt(req.body?.studentId)
+      const title = String(req.body?.title || '').trim().slice(0, 255)
+      const journalEntry = String(req.body?.journalEntry || '').trim()
+      const mood = String(req.body?.mood || '').trim().toLowerCase().slice(0, 50)
+
+      if (!providedStudentId) {
+        return res.status(400).json({ error: 'Valid studentId is required.' })
+      }
+      if (!journalEntry) {
+        return res.status(400).json({ error: 'Journal entry cannot be empty.' })
+      }
+
+      await ensureJournalSchema(dbPool)
+
+      const resolvedStudentId = await resolveStudentIdForQuestionnaire(dbPool, providedStudentId)
+      if (!resolvedStudentId) {
+        return res.status(404).json({ error: 'Student profile not found.' })
+      }
+
+      const insert = await dbPool.query(
+        `
+        INSERT INTO journal (student_id, title, journal_entry, mood, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        RETURNING journal_id, student_id, title, journal_entry, mood, created_at, updated_at
+        `,
+        [resolvedStudentId, title || null, journalEntry, mood || null]
+      )
+
+      const entry = insert.rows[0]
+      return res.status(201).json({
+        entry: {
+          journalId: Number(entry.journal_id),
+          studentId: Number(entry.student_id),
+          title: entry.title || 'Untitled entry',
+          journalEntry: String(entry.journal_entry || ''),
+          mood: entry.mood || null,
+          createdAt: toIsoString(entry.created_at),
+          updatedAt: toIsoString(entry.updated_at),
+        },
+      })
+    } catch (err) {
+      console.error('Failed to save journal entry:', err.message)
+      return res.status(500).json({ error: 'Failed to save journal entry.' })
     }
   })
 

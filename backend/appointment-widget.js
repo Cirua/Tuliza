@@ -68,6 +68,8 @@
   const googleCalendarActions = document.getElementById('googleCalendarActions');
   let resolvedStudentId = null;
   let availabilityPollId = null;
+  let preferredTherapistType = null;
+  let preferredTherapistId = null;
 
   function todayYmd() {
     return new Date().toISOString().slice(0, 10);
@@ -216,7 +218,7 @@
 
   function getSessionUser() {
     try {
-      const raw = localStorage.getItem('tuliza_session_user');
+      const raw = sessionStorage.getItem('tuliza_session_user') || localStorage.getItem('tuliza_session_user');
       if (!raw) return null;
       return JSON.parse(raw);
     } catch (_) {
@@ -226,13 +228,23 @@
 
   function getStudentIdentityCandidate() {
     const session = getSessionUser();
-    if (session && session.role === 'student' && session.alias) return session.alias;
+    if (session && session.role === 'student') {
+      if (session.userId) return String(session.userId);
+      if (session.signupId) return String(session.signupId);
+      if (session.alias) return String(session.alias);
+      if (session.email) return String(session.email);
+    }
 
     try {
       const signupRaw = localStorage.getItem('tuliza_signup_user');
       if (!signupRaw) return null;
       const signup = JSON.parse(signupRaw);
-      if (signup && signup.role === 'student' && signup.alias) return signup.alias;
+      if (signup && signup.role === 'student') {
+        if (signup.userId) return String(signup.userId);
+        if (signup.signupId) return String(signup.signupId);
+        if (signup.alias) return String(signup.alias);
+        if (signup.email) return String(signup.email);
+      }
     } catch (_) {
       return null;
     }
@@ -241,6 +253,9 @@
   }
 
   async function resolveStudentIdFromSession() {
+    preferredTherapistType = null;
+    preferredTherapistId = null;
+
     const identifier = getStudentIdentityCandidate();
     if (!identifier) {
       resolvedStudentId = null;
@@ -255,9 +270,25 @@
     }
 
     resolvedStudentId = Number(payload.userId);
+
+    try {
+      const assignmentResponse = await fetch(`/api/student/assigned-support?studentId=${encodeURIComponent(String(resolvedStudentId))}`);
+      const assignmentPayload = await parseJsonResponse(assignmentResponse, 'Could not load assigned therapist.');
+      if (assignmentPayload.assigned && assignmentPayload.assignedRole && assignmentPayload.assignedId) {
+        preferredTherapistType = String(assignmentPayload.assignedRole);
+        preferredTherapistId = Number(assignmentPayload.assignedId);
+      }
+    } catch (_) {
+      preferredTherapistType = null;
+      preferredTherapistId = null;
+    }
   }
 
   async function loadTherapists() {
+    if (preferredTherapistType) {
+      therapistTypeInput.value = preferredTherapistType;
+    }
+
     const therapistType = therapistTypeInput.value;
     therapistIdInput.innerHTML = '';
 
@@ -269,6 +300,13 @@
       .join('');
 
     therapistIdInput.innerHTML = optionsHtml;
+    if (preferredTherapistId && String(preferredTherapistType || '') === String(therapistType)) {
+      const preferredOption = therapistIdInput.querySelector(`option[value="${preferredTherapistId}"]`);
+      if (preferredOption) {
+        therapistIdInput.value = String(preferredTherapistId);
+      }
+    }
+
     if (!optionsHtml) {
       appointmentFeedback.textContent = 'No therapists found for this role yet.';
     }

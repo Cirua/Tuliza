@@ -14,7 +14,7 @@
   <div class="app-shell">
 
     <nav class="navbar" role="navigation" aria-label="Main navigation">
-      <a href="tuliza-frontend.html" class="logo" aria-label="Tuliza home">
+      <a href="/student.html" class="logo" aria-label="Tuliza home">
         <div class="logo-mark" aria-hidden="true">
           <!-- Leaf / heart icon -->
           <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
@@ -25,11 +25,11 @@
       </a>
 
       <div class="nav-tabs" role="navigation" aria-label="Section links">
-        <a class="nav-tab active" href="student.html" aria-current="page">Dashboard</a>
-        <a class="nav-tab" href="/frontend/chat-ui.html">Chat</a>
-        <a class="nav-tab" href="resources.html">Resources</a>
-        <a class="nav-tab" href="/frontend/journal.html">Journal</a>
-        <a class="nav-tab" href="/frontend/account.html">Account</a>
+        <a class="nav-tab active" href="/student.html" aria-current="page">Dashboard</a>
+        <a class="nav-tab" href="/chat-ui.html">Chat</a>
+        <a class="nav-tab" href="/resources.html">Resources</a>
+        <a class="nav-tab" href="/journal.html">Journal</a>
+        <a class="nav-tab" href="/account.html">Account</a>
       </div>
 
       <div class="nav-right">
@@ -50,7 +50,7 @@
       <aside class="sidebar" aria-label="Side navigation">
         <span class="sidebar-section-label">Menu</span>
 
-        <button class="sidebar-item active" aria-current="page" data-link="tuliza-frontend.html" aria-label="Overview">
+        <button class="sidebar-item active" aria-current="page" data-link="/student.html" aria-label="Overview">
           <!-- Overview icon -->
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <rect x="1" y="1" width="6" height="6" rx="1"/>
@@ -61,14 +61,14 @@
           <span>Overview</span>
         </button>
 
-        <button class="sidebar-item" data-link="journal.html" aria-label="My Wellbeing">
+        <button class="sidebar-item" data-link="/journal.html" aria-label="My Wellbeing">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm-1 4h2v5H7zm0-3h2v2H7z"/>
           </svg>
           <span>My Wellbeing</span>
         </button>
 
-        <button class="sidebar-item" data-link="chat-ui.html" aria-label="Conversations">
+        <button class="sidebar-item" data-link="/chat-ui.html" aria-label="Conversations">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M2 2h12a1 1 0 011 1v8a1 1 0 01-1 1H9l-3 2v-2H2a1 1 0 01-1-1V3a1 1 0 011-1z"/>
           </svg>
@@ -86,14 +86,14 @@
           <span>Book a Session</span>
         </button>
 
-        <button class="sidebar-item" data-link="resources.html" aria-label="Resources">
+        <button class="sidebar-item" data-link="/resources.html" aria-label="Resources">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M2 2h12v12H2V2zm1 1v10h10V3H3zm2 2h6v1H5zm0 2h6v1H5zm0 2h4v1H5z"/>
           </svg>
           <span>Resources</span>
         </button>
 
-        <button class="sidebar-item" data-link="journal.html" aria-label="Journal">
+        <button class="sidebar-item" data-link="/journal.html" aria-label="Journal">
           <svg class="item-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M3 1h10a1 1 0 011 1v12l-3-2H3a1 1 0 01-1-1V2a1 1 0 011-1zm1 3v1h8V4H4zm0 2v1h6V6H4z"/>
           </svg>
@@ -104,7 +104,7 @@
       <main class="content" id="main-content">
 
         <div class="greeting-block fade-up">
-          <p class="greeting-sub">Good afternoon, Starling_92</p>
+          <p class="greeting-sub" id="greeting-sub">Welcome back</p>
           <h1 class="greeting-title">How are you feeling <em>today?</em></h1>
         </div>
 
@@ -213,7 +213,7 @@
               Last entry: <strong>2 days ago</strong><br>
               Writing helps you make sense of your thoughts in a safe, private space.
             </p>
-            <a class="btn-outline-accent" href="journal.html">Open journal -&gt;</a>
+            <a class="btn-outline-accent" href="/journal.html">Open journal -&gt;</a>
           </div>
 
           <div class="info-card" id="assigned-support-card" aria-live="polite">
@@ -271,7 +271,7 @@
       </div>
 
       <div class="modal-actions">
-        <a class="btn-ghost-modal" href="tuliza-frontend.html">Cancel</a>
+        <a class="btn-ghost-modal" href="/student.html">Cancel</a>
         <button class="btn-primary">Continue to payment -&gt;</button>
       </div>
     </div>
@@ -302,7 +302,7 @@
 
       <div class="modal-actions" style="margin-top:20px">
         <a class="btn-primary" style="background:var(--danger)" href="tel:999">Call now</a>
-        <a class="btn-ghost-modal" href="tuliza-frontend.html">Close</a>
+        <a class="btn-ghost-modal" href="/student.html">Close</a>
       </div>
     </div>
   </div>
@@ -325,6 +325,39 @@
   </div>
 
   <script>
+    function enforceRoleAccess(expectedRole) {
+      let sessionUser = {};
+      try {
+        sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+      } catch (_) {
+        sessionUser = {};
+      }
+
+      if (String(sessionUser.role || '').toLowerCase() !== String(expectedRole || '').toLowerCase()) {
+        window.location.href = '/account.html';
+        return null;
+      }
+
+      return sessionUser;
+    }
+
+    function formatAliasFromSession(sessionUser) {
+      const email = String(sessionUser?.email || '').trim();
+      const fromEmail = email && email.includes('@') ? email.split('@')[0] : '';
+      const fallback = fromEmail || String(sessionUser?.alias || '').trim() || 'there';
+      return fallback.replace(/[._-]+/g, ' ').trim() || 'there';
+    }
+
+    function applyGreeting(sessionUser) {
+      const greetingEl = document.getElementById('greeting-sub');
+      if (!greetingEl) return;
+
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
+      const alias = formatAliasFromSession(sessionUser);
+      greetingEl.textContent = `${greeting}, ${alias}`;
+    }
+
     async function loadAssignedSupportProfile() {
       const statusEl = document.getElementById('assigned-support-status');
       const titleEl = document.getElementById('assigned-support-title');
@@ -396,8 +429,99 @@
       }
     }
 
+    function initializeStudentDashboardInteractions() {
+      const moodButtons = Array.from(document.querySelectorAll('.mood-btn'));
+      const summaryMood = document.getElementById('summary-mood');
+      const summaryNext = document.getElementById('summary-next');
+      const primaryAction = document.querySelector('.action-btn.primary');
+      const bookAction = document.querySelector('.action-btn.secondary');
+
+      const moodAdvice = {
+        great: 'Keep the momentum. Share one thing that made today good in your journal.',
+        calm: 'Great baseline. A 2-minute breathwork reset can keep you centered.',
+        low: 'Take it gently. Consider booking a session for extra support.',
+        anxious: 'Try a grounding exercise now: 5 things you can see, 4 you can feel.',
+        stressed: 'Pause and reset with box breathing for 2 minutes.',
+        numb: 'Start with one small check-in note in your journal today.',
+      };
+
+      const toMoodLabel = (mood) => mood.charAt(0).toUpperCase() + mood.slice(1);
+
+      const applyMood = (mood) => {
+        const normalizedMood = String(mood || '').toLowerCase();
+        if (!normalizedMood) return;
+
+        document.body.setAttribute('data-mood', normalizedMood);
+        localStorage.setItem('tuliza_selected_mood', normalizedMood);
+
+        if (summaryMood) {
+          summaryMood.textContent = toMoodLabel(normalizedMood);
+        }
+        if (summaryNext) {
+          summaryNext.textContent = moodAdvice[normalizedMood] || moodAdvice.calm;
+        }
+
+        moodButtons.forEach((button) => {
+          const isSelected = button.dataset.mood === normalizedMood;
+          button.classList.toggle('selected', isSelected);
+          button.setAttribute('aria-pressed', String(isSelected));
+        });
+      };
+
+      const persistedMood = localStorage.getItem('tuliza_selected_mood') || 'calm';
+      applyMood(persistedMood);
+
+      moodButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          applyMood(button.dataset.mood || 'calm');
+        });
+      });
+
+      if (primaryAction) {
+        primaryAction.addEventListener('click', () => {
+          window.location.href = '/chat-ui.html';
+        });
+      }
+
+      const openBookingWidget = () => {
+        const fab = document.getElementById('bookAppointmentFab');
+        if (fab) {
+          fab.click();
+          return;
+        }
+
+        const fallbackModal = document.getElementById('booking-modal');
+        if (fallbackModal) {
+          fallbackModal.style.display = 'flex';
+        }
+      };
+
+      if (bookAction) {
+        bookAction.addEventListener('click', openBookingWidget);
+      }
+
+      document.querySelectorAll('.sidebar-item[data-link]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const link = button.getAttribute('data-link');
+          if (link) window.location.href = link;
+        });
+      });
+
+      document.querySelectorAll('.sidebar-item[data-modal="booking-modal"]').forEach((button) => {
+        button.addEventListener('click', openBookingWidget);
+      });
+    }
+
+    const verifiedStudentSession = enforceRoleAccess('student');
+    if (verifiedStudentSession) {
+      applyGreeting(verifiedStudentSession);
+    }
+
     loadAssignedSupportProfile();
+    initializeStudentDashboardInteractions();
   </script>
+
+  <script src="/backend/appointment-widget.js"></script>
 
 </body>
 </html>

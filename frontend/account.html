@@ -11,7 +11,7 @@
 </head>
 <body>
   <nav class="navbar" aria-label="Main navigation">
-    <a class="logo" href="tuliza-frontend.html">
+    <a class="logo" href="/student.html">
       <div class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
@@ -27,10 +27,10 @@
       <h1>Login or create your Tuliza account</h1>
       <p class="subtitle">Create your account by role, then continue to the correct dashboard.</p>
       <div class="auth-role-preview" role="navigation" aria-label="Role pages">
-        <a href="tuliza-frontend.html" class="role-chip">Student page</a>
-        <a href="mentor.html" class="role-chip">Mentor page</a>
-        <a href="psychologist.html" class="role-chip">Psychiatrist page</a>
-        <a href="admin.html" class="role-chip">Admin page</a>
+        <a href="/student.html" class="role-chip">Student page</a>
+        <a href="/mentor.html" class="role-chip">Mentor page</a>
+        <a href="/psychologist.html" class="role-chip">Psychiatrist page</a>
+        <a href="/admin.html" class="role-chip">Admin page</a>
       </div>
     </section>
 
@@ -113,10 +113,10 @@
     }
 
     function getRoleRedirect(role) {
-      if (role === 'mentor') return 'mentor.html';
-      if (role === 'psychiatrist') return 'psychologist.html';
-      if (role === 'admin') return 'admin.html';
-      return 'student.html';
+      if (role === 'mentor') return '/mentor.html';
+      if (role === 'psychiatrist') return '/psychologist.html';
+      if (role === 'admin') return '/admin.html';
+      return '/student.html';
     }
 
     const tabLogin = document.getElementById('tab-login');
@@ -128,6 +128,37 @@
     const signupForm = document.getElementById('signup-form');
     const loginMessage = document.getElementById('login-message');
     const signupMessage = document.getElementById('signup-message');
+
+    function enforceRoleChipAccess() {
+      const chips = Array.from(document.querySelectorAll('.auth-role-preview .role-chip'));
+      chips.forEach((chip) => {
+        chip.addEventListener('click', (event) => {
+          const href = chip.getAttribute('href') || '';
+          if (!href || href === '/student.html') return;
+
+          let sessionUser = null;
+          try {
+            sessionUser = JSON.parse(sessionStorage.getItem('tuliza_session_user') || '{}');
+          } catch (_) {
+            sessionUser = null;
+          }
+
+          const role = String(sessionUser?.role || '').toLowerCase();
+          const expectedRole = href.includes('mentor')
+            ? 'mentor'
+            : href.includes('psychologist')
+              ? 'psychiatrist'
+              : href.includes('admin')
+                ? 'admin'
+                : 'student';
+
+          if (role !== expectedRole) {
+            event.preventDefault();
+            loginMessage.textContent = `Please login as ${expectedRole} to access that dashboard.`;
+          }
+        });
+      });
+    }
 
     function activateTab(mode) {
       const isLogin = mode === 'login';
@@ -217,6 +248,7 @@
     });
 
     activateTab('login');
+    enforceRoleChipAccess();
   </script>
 </body>
 </html>

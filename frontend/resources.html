@@ -11,7 +11,7 @@
 </head>
 <body>
   <nav class="navbar" aria-label="Main navigation">
-    <a class="logo" href="tuliza-frontend.html">
+    <a class="logo" href="/student.html">
       <div class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
@@ -20,11 +20,11 @@
       <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
     </a>
     <div class="nav-tabs" role="navigation" aria-label="Section links">
-      <a class="nav-tab" href="tuliza-frontend.html">Dashboard</a>
-      <a class="nav-tab" href="chat-ui.html">Chat</a>
-      <a class="nav-tab active" href="resources.html" aria-current="page">Resources</a>
-      <a class="nav-tab" href="journal.html">Journal</a>
-      <a class="nav-tab" href="account.html">Account</a>
+      <a class="nav-tab" href="/student.html">Dashboard</a>
+      <a class="nav-tab" href="/chat-ui.html">Chat</a>
+      <a class="nav-tab active" href="/resources.html" aria-current="page">Resources</a>
+      <a class="nav-tab" href="/journal.html">Journal</a>
+      <a class="nav-tab" href="/account.html">Account</a>
     </div>
   </nav>
 
@@ -44,10 +44,14 @@
       </div>
     </section>
 
-    <section class="grid" aria-label="Resource list">
-      <a class="resource-card-link" href="resource-detail.html?topic=exam-pressure" data-resource-card data-title="coping with exam pressure" data-tags="stress exams study">
+    <p class="resource-result-count" id="resource-result-count" aria-live="polite"></p>
+
+    <section class="grid" aria-label="Resource list" id="resource-grid">
+      <a class="resource-card-link" href="resource-detail.html?topic=exam-pressure" data-resource-card data-title="coping with exam pressure" data-tags="stress exams study" data-category="stress">
       <article class="card">
-        <div class="thumb" aria-hidden="true">1</div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80" alt="Student preparing for exams" loading="lazy" />
+        </div>
         <div class="card-body">
           <span class="tag">Study</span>
           <h2>Coping With Exam Pressure</h2>
@@ -56,9 +60,11 @@
       </article>
       </a>
 
-      <a class="resource-card-link" href="resource-detail.html?topic=calm-reset" data-resource-card data-title="2 minute calm reset" data-tags="anxiety breathing stress">
+      <a class="resource-card-link" href="resource-detail.html?topic=calm-reset" data-resource-card data-title="2 minute calm reset" data-tags="anxiety breathing stress" data-category="anxiety">
       <article class="card">
-        <div class="thumb" aria-hidden="true">2</div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=1200&q=80" alt="Person doing calm breathing exercise" loading="lazy" />
+        </div>
         <div class="card-body">
           <span class="tag">Breathing</span>
           <h2>2-Minute Calm Reset</h2>
@@ -67,9 +73,11 @@
       </article>
       </a>
 
-      <a class="resource-card-link" href="resource-detail.html?topic=sleep-balance" data-resource-card data-title="sleep and study balance" data-tags="sleep focus study stress">
+      <a class="resource-card-link" href="resource-detail.html?topic=sleep-balance" data-resource-card data-title="sleep and study balance" data-tags="sleep focus study stress" data-category="sleep">
       <article class="card">
-        <div class="thumb" aria-hidden="true">3</div>
+        <div class="thumb">
+          <img src="https://images.pexels.com/photos/3771069/pexels-photo-3771069.jpeg?auto=compress&cs=tinysrgb&w=1200" alt="Peaceful sleep setup with warm lighting" loading="lazy" onerror="this.onerror=null;this.src='https://images.pexels.com/photos/935777/pexels-photo-935777.jpeg?auto=compress&cs=tinysrgb&w=1200';" />
+        </div>
         <div class="card-body">
           <span class="tag">Sleep</span>
           <h2>Sleep and Study Balance</h2>
@@ -78,9 +86,11 @@
       </article>
       </a>
 
-      <a class="resource-card-link" href="resource-detail.html?topic=overthinking-toolkit" data-resource-card data-title="overthinking toolkit" data-tags="mindset anxiety overthinking">
+      <a class="resource-card-link" href="resource-detail.html?topic=overthinking-toolkit" data-resource-card data-title="overthinking toolkit" data-tags="mindset anxiety overthinking" data-category="mindset">
       <article class="card">
-        <div class="thumb" aria-hidden="true">4</div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&w=1200&q=80" alt="Notebook and coffee for reflection" loading="lazy" />
+        </div>
         <div class="card-body">
           <span class="tag">Mindset</span>
           <h2>Overthinking Toolkit</h2>
@@ -89,9 +99,11 @@
       </article>
       </a>
 
-      <a class="resource-card-link" href="resource-detail.html?topic=ask-for-help" data-resource-card data-title="when to ask for help" data-tags="support stress anxiety">
+      <a class="resource-card-link" href="resource-detail.html?topic=ask-for-help" data-resource-card data-title="when to ask for help" data-tags="support stress anxiety" data-category="stress">
       <article class="card">
-        <div class="thumb" aria-hidden="true">5</div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1516302752625-fcc3c50ae61f?auto=format&fit=crop&w=1200&q=80" alt="Two people having a supportive conversation" loading="lazy" />
+        </div>
         <div class="card-body">
           <span class="tag">Support</span>
           <h2>When to Ask for Help</h2>
@@ -100,9 +112,11 @@
       </article>
       </a>
 
-      <a class="resource-card-link" href="resource-detail.html?topic=journaling-prompts" data-resource-card data-title="journaling starter prompts" data-tags="mindset reflection journal">
+      <a class="resource-card-link" href="resource-detail.html?topic=journaling-prompts" data-resource-card data-title="journaling starter prompts" data-tags="mindset reflection journal" data-category="mindset">
       <article class="card">
-        <div class="thumb" aria-hidden="true">6</div>
+        <div class="thumb">
+          <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=1200&q=80" alt="Open journal for reflective writing" loading="lazy" />
+        </div>
         <div class="card-body">
           <span class="tag">Reflection</span>
           <h2>Journaling Starter Prompts</h2>
@@ -113,6 +127,59 @@
     </section>
     <p class="resource-empty-state" id="resource-empty-state" style="display:none;">No resources matched your search. Try another keyword or filter.</p>
   </main>
+
+  <script>
+    const searchInput = document.getElementById('resource-search');
+    const filterButtons = Array.from(document.querySelectorAll('.resource-chip'));
+    const resourceCards = Array.from(document.querySelectorAll('[data-resource-card]'));
+    const emptyState = document.getElementById('resource-empty-state');
+    const resultCount = document.getElementById('resource-result-count');
+
+    let activeFilter = 'all';
+
+    function normalize(text) {
+      return String(text || '').toLowerCase().trim();
+    }
+
+    function applyFilters() {
+      const query = normalize(searchInput ? searchInput.value : '');
+      let visibleCount = 0;
+
+      resourceCards.forEach((card) => {
+        const title = normalize(card.getAttribute('data-title'));
+        const tags = normalize(card.getAttribute('data-tags'));
+        const category = normalize(card.getAttribute('data-category'));
+
+        const filterMatch = activeFilter === 'all' || category === activeFilter;
+        const searchMatch = !query || title.includes(query) || tags.includes(query);
+        const shouldShow = filterMatch && searchMatch;
+
+        card.style.display = shouldShow ? '' : 'none';
+        card.classList.toggle('resource-hidden', !shouldShow);
+        if (shouldShow) visibleCount += 1;
+      });
+
+      if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      if (resultCount) {
+        resultCount.textContent = visibleCount === 1 ? '1 resource found' : `${visibleCount} resources found`;
+      }
+    }
+
+    filterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeFilter = normalize(button.getAttribute('data-filter')) || 'all';
+        filterButtons.forEach((chip) => chip.classList.remove('active'));
+        button.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFilters);
+    }
+
+    applyFilters();
+  </script>
 
 </body>
 </html>
