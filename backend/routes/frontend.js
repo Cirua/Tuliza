@@ -21,7 +21,9 @@ function setupFrontendRoutes(app, { projectRoot, frontendRoot }) {
     res.sendFile(path.join(projectRoot, 'backend', 'chat.js'))
   })
   app.get('/backend/appointment-widget.js', (req, res) => {
-    res.sendFile(path.join(projectRoot, 'backend', 'db', 'appointment-widget.js'))
+    const newLocation = path.join(projectRoot, 'backend', 'appointment-widget.js')
+    const legacyLocation = path.join(projectRoot, 'backend', 'db', 'appointment-widget.js')
+    res.sendFile(fs.existsSync(newLocation) ? newLocation : legacyLocation)
   })
 
 
