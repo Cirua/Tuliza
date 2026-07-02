@@ -20,6 +20,9 @@ function setupFrontendRoutes(app, { projectRoot, frontendRoot }) {
   app.get('/backend/chat.js', (req, res) => {
     res.sendFile(path.join(projectRoot, 'backend', 'chat.js'))
   })
+  app.get('/backend/appointment-widget.js', (req, res) => {
+    res.sendFile(path.join(projectRoot, 'backend', 'db', 'appointment-widget.js'))
+  })
 
 
   app.get('/', (req, res) => {

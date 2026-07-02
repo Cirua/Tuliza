@@ -11,7 +11,7 @@
 </head>
 <body>
   <nav class="navbar" aria-label="Main navigation">
-    <a class="logo" href="tuliza-frontend.html">
+    <a class="logo" href="/student.html">
       <div class="logo-mark" aria-hidden="true">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 1C4.7 1 2 3.7 2 7c0 2.1 1.1 4 2.7 5.1L8 15l3.3-2.9C12.9 11 14 9.1 14 7c0-3.3-2.7-6-6-6zm0 8c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
@@ -20,11 +20,11 @@
       <span class="logo-text">Tuliz<span class="accent-letter">a</span></span>
     </a>
     <div class="nav-tabs" role="navigation" aria-label="Section links">
-        <a class="nav-tab active" href="mentor.html" aria-current="page">Dashboard</a>
-        <a class="nav-tab" href="/frontend/chat-ui.html">Chat</a>
-        <a class="nav-tab" href="resources.html">Resources</a>
-        <a class="nav-tab" href="/frontend/journal.html">Journal</a>
-        <a class="nav-tab" href="/frontend/account.html">Account</a>
+        <a class="nav-tab active" href="/psychologist.html" aria-current="page">Dashboard</a>
+        <a class="nav-tab" href="/chat-ui.html">Chat</a>
+        <a class="nav-tab" href="/resources.html">Resources</a>
+        <a class="nav-tab" href="/journal.html">Journal</a>
+        <a class="nav-tab" href="/account.html">Account</a>
       </div>
   </nav>
 
@@ -184,7 +184,7 @@
       }
 
       if (!sessionUser || sessionUser.role !== 'psychiatrist' || !sessionUser.userId) {
-        window.location.href = 'account.html';
+        window.location.href = '/account.html';
         return;
       }
 
